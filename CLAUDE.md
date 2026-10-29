@@ -91,6 +91,8 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 - 여러 모양이 있는 컴포넌트는 `cva` 변형으로 정의한다. 새 모양은 변형을 추가하고, 쓰는 곳에서 클래스를 덧붙이지 않는다.
 - 상태 이름은 DB 값과 같게 쓴다: `pending` / `done` / `postponed` / `canceled`.
 - `shared/ui`(shadcn 원본)에는 도메인 단어를 넣지 않는다.
+- shadcn 컴포넌트는 `pnpm exec shadcn add <이름>`으로 추가한다. 추가한 뒤 `import { cn } from "cn"`이 생기면 `@/shared/lib/utils`로 바꾸고(린트가 잡는다), 버튼처럼 누르는 요소의 높이를 44px 이상으로 맞춘다.
+- 테마는 `<html data-theme>`로 바꾼다. shadcn의 `dark:` 변형은 OS 다크 모드가 아니라 어두운 테마(`night-desk`)에서만 켜진다.
 - 모바일 우선. 폭 구간: 600 미만 한 열, 600~839 카드 2열, 840 이상 두 영역 분할 + 왼쪽 세로 메뉴. 높이는 `100dvh`.
 - 화면 크기를 JS 상태로 계산하지 않는다(폴드 접기·펼치기 대응). 레이아웃은 미디어 쿼리, 놓이는 자리에 따라 달라지는 컴포넌트는 컨테이너 쿼리.
 - 방은 4:3 캔버스, 슬롯 위치는 `seed/room-slots.json`의 % 값.

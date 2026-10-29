@@ -8,6 +8,7 @@
 | 날짜 | 내용 |
 |---|---|
 | 2026-10-29 | 외부 서비스 연결 가이드(docs/setup.md), .env.example, Vercel 함수 리전 sin1. 구글 리디렉션 주소 때문에 Vercel 연결을 로그인보다 먼저 한다 |
+| 2026-10-29 | 디자인 토큰 1차안(globals.css), shadcn/ui 기본 컴포넌트 6종(shared/ui), Pretendard, `/playground`. 임의 값 색 린트, 2.3 예시를 Tailwind 4 문법으로 |
 | 2026-10-29 | GitHub Actions CI: PR·main push마다 커밋 메시지, lint, typecheck, 포맷, 테스트, 시드 검증, 빌드 |
 | 2026-10-29 | 층 간 import 규칙을 eslint-plugin-boundaries로 강제 (3.1). services 호출은 app·features만, server는 shared/lib·config만 |
 | 2026-10-29 | Next.js 16 앱 생성, pnpm 스크립트(typecheck는 `next typegen` 후 tsc), Prettier(Markdown 제외), Vitest, commitlint·husky 적용 |
@@ -135,7 +136,7 @@
 }
 ```
 
-- 화면에서는 `bg-primary`, `text-reward`, `rounded-[--radius]`처럼 **토큰 이름으로만** 쓴다. `bg-[#f2994a]` 같은 직접 값은 쓰지 않는다(코드 리뷰 체크, 가능하면 린트로 막음).
+- 화면에서는 `bg-primary`, `text-reward`, `rounded-lg`(= `--radius`), `duration-(--duration-fast)`처럼 **토큰 이름으로만** 쓴다. `bg-[#f2994a]` 같은 직접 값은 쓰지 않는다. 클래스 안의 임의 값 색(`#hex`, `rgb()`, `hsl()`, `oklch()`)은 ESLint가 막는다.
 - 테마는 `<html data-theme="...">` 한 곳만 바꾸면 앱 전체에 반영된다. 기획서의 세트 테마(포근한 아침, 초록 방, 밤의 책상)를 앱 색 테마로 넓히는 것도 이 방식으로 가능하다.
 - MVP는 라이트 테마 하나로 시작하고, 다크 모드는 같은 구조로 나중에 추가한다.
 
@@ -146,7 +147,7 @@
 ```tsx
 // entities/mission/ui/mission-card.tsx
 const missionCard = cva(
-  "rounded-[--radius] border p-4 transition-colors duration-[--duration-fast]",
+  "rounded-lg border p-4 transition-colors duration-(--duration-fast)",
   {
     variants: {
       status: {
