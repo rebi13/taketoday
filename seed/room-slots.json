@@ -1,0 +1,129 @@
+{
+  "canvas": {
+    "aspectRatio": "4:3",
+    "unit": "percent"
+  },
+  "defaults": {
+    "wallpaper": "기본 벽지 (밝은 크림 단색)",
+    "floor": "기본 바닥 (연한 원목)",
+    "window": "맑은 낮 하늘"
+  },
+  "slots": [
+    {
+      "key": "wallpaper",
+      "slotType": "wallpaper",
+      "label": "벽지",
+      "z": 0,
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 100,
+        "h": 72
+      }
+    },
+    {
+      "key": "floor",
+      "slotType": "floor",
+      "label": "바닥",
+      "z": 1,
+      "box": {
+        "x": 0,
+        "y": 72,
+        "w": 100,
+        "h": 28
+      }
+    },
+    {
+      "key": "window",
+      "slotType": "window",
+      "label": "창밖 풍경",
+      "z": 2,
+      "box": {
+        "x": 38,
+        "y": 10,
+        "w": 24,
+        "h": 30
+      }
+    },
+    {
+      "key": "wall_deco_1",
+      "slotType": "wall_deco",
+      "label": "벽 장식 1",
+      "z": 3,
+      "box": {
+        "x": 12,
+        "y": 14,
+        "w": 14,
+        "h": 18
+      }
+    },
+    {
+      "key": "wall_deco_2",
+      "slotType": "wall_deco",
+      "label": "벽 장식 2",
+      "z": 3,
+      "box": {
+        "x": 72,
+        "y": 14,
+        "w": 14,
+        "h": 18
+      }
+    },
+    {
+      "key": "furniture_left",
+      "slotType": "furniture_left",
+      "label": "왼쪽 가구",
+      "z": 4,
+      "box": {
+        "x": 2,
+        "y": 40,
+        "w": 36,
+        "h": 46
+      }
+    },
+    {
+      "key": "furniture_right",
+      "slotType": "furniture_right",
+      "label": "오른쪽 가구",
+      "z": 4,
+      "box": {
+        "x": 66,
+        "y": 46,
+        "w": 30,
+        "h": 40
+      }
+    },
+    {
+      "key": "floor_deco_1",
+      "slotType": "floor_deco",
+      "label": "바닥 소품 1",
+      "z": 5,
+      "box": {
+        "x": 34,
+        "y": 74,
+        "w": 16,
+        "h": 18
+      }
+    },
+    {
+      "key": "floor_deco_2",
+      "slotType": "floor_deco",
+      "label": "바닥 소품 2",
+      "z": 5,
+      "box": {
+        "x": 54,
+        "y": 76,
+        "w": 14,
+        "h": 16
+      }
+    },
+    {
+      "key": "costume",
+      "slotType": "costume",
+      "label": "캐릭터 꾸미기",
+      "z": 7,
+      "box": null,
+      "note": "캐릭터 SVG의 기준점(head/body/paws)에 붙는다. 캐릭터는 z 6"
+    }
+  ]
+}

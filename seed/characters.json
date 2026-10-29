@@ -1,0 +1,90 @@
+{
+  "types": [
+    {
+      "id": "dust-bunny",
+      "name": "먼지토끼",
+      "concept": "dust bunny(먼지뭉치)에서 온 동글동글한 토끼. 서비스 콘셉트와 가장 직접 연결"
+    },
+    {
+      "id": "cat",
+      "name": "고양이",
+      "concept": "대중적이고 방에 잘 어울리는 둥근 고양이"
+    },
+    {
+      "id": "hamster",
+      "name": "햄스터",
+      "concept": "볼이 통통한 둥근 실루엣. 먼지토끼·고양이와 크기·둥근 느낌을 맞춤"
+    }
+  ],
+  "parts": [
+    "body",
+    "eyes",
+    "mouth",
+    "ears",
+    "tail",
+    "cheeks"
+  ],
+  "anchors": [
+    "head",
+    "body",
+    "paws"
+  ],
+  "reactions": [
+    {
+      "key": "idle",
+      "name": "기본",
+      "when": "홈에서 평소 (대기 움직임 반복)",
+      "stage": "mvp"
+    },
+    {
+      "key": "happy",
+      "name": "기쁨",
+      "when": "미션 완료",
+      "stage": "mvp"
+    },
+    {
+      "key": "excited",
+      "name": "신남",
+      "when": "어제 보상 도착, 아이템 구매",
+      "stage": "mvp"
+    },
+    {
+      "key": "cheer",
+      "name": "응원",
+      "when": "추천이 남아 있을 때, 저녁 알림으로 들어왔을 때",
+      "stage": "mvp"
+    },
+    {
+      "key": "sleepy",
+      "name": "졸림",
+      "when": "밤(22시 이후), 오랜만에 접속",
+      "stage": "mvp"
+    },
+    {
+      "key": "rest",
+      "name": "쉬는 날",
+      "when": "쉬는 날로 지정한 요일",
+      "stage": "mvp"
+    },
+    {
+      "key": "surprised",
+      "name": "놀람",
+      "when": "레어 아이템 획득 (2단계 뽑기)",
+      "stage": "phase2"
+    }
+  ],
+  "idleMotion": {
+    "periodSeconds": [
+      2,
+      4
+    ],
+    "moves": [
+      "breathe",
+      "blink",
+      "ear-twitch",
+      "tail-sway"
+    ],
+    "respectReducedMotion": true,
+    "pauseWhenHidden": true
+  }
+}
