@@ -1,24 +1,145 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+
+/*
+ * 디자인 토큰 (implementation-plan 2.3 ①)
+ * - 색·둥글기·그림자·모션·레이어 값은 이 파일에만 둔다. 화면 코드는 토큰 이름만 쓴다.
+ * - 이름은 "어떤 색"이 아니라 "무슨 역할"로 짓는다.
+ * - 테마는 <html data-theme="..."> 하나로 바꾸고, 테마 블록은 변수 값만 덮어쓴다.
+ */
+
+/* shadcn 컴포넌트의 dark: 변형은 어두운 테마에서만 켠다. OS 다크 모드를 따르지 않는다. */
+@custom-variant dark (&:where([data-theme="night-desk"], [data-theme="night-desk"] *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* 기본 (shadcn 역할) */
+  --background: #fffaf3;
+  --foreground: #3b3a36;
+  --card: #ffffff;
+  --card-foreground: #3b3a36;
+  --popover: #ffffff;
+  --popover-foreground: #3b3a36;
+  --primary: #f2994a; /* 주요 버튼, 완료 */
+  --primary-foreground: #ffffff;
+  --secondary: #f3eee6;
+  --secondary-foreground: #3b3a36;
+  --muted: #f3eee6;
+  --muted-foreground: #7a756c;
+  --accent: #f3eee6;
+  --accent-foreground: #3b3a36;
+  --destructive: #d9534f;
+  --border: #e8e1d6;
+  --input: #e8e1d6;
+  --ring: #f2994a;
+  --radius: 1rem; /* 전체 둥글기 기준 */
+
+  /* 서비스 전용 역할 */
+  --reward: #e9b949; /* 재화, 보상 */
+  --reward-foreground: #3b3a36;
+  --pending: #9bb7d4; /* 적립 예정 */
+  --postponed: #c9c2b8; /* 내일로 */
+
+  /* 그림자 */
+  --shadow-card: 0 2px 0 rgb(0 0 0 / 0.06);
+
+  /* 모션 */
+  --duration-fast: 150ms;
+  --duration-reward: 600ms; /* 보상 연출 */
+
+  /* 방 화면 레이어 (2.3 ⑤): 벽지 < 창밖 < 벽 장식 < 가구 < 바닥 소품 < 캐릭터 */
+  --z-wallpaper: 0;
+  --z-window: 10;
+  --z-wall-decor: 20;
+  --z-furniture: 30;
+  --z-floor: 40;
+  --z-character: 50;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+/* 시험용 어두운 테마 1차안. 기획서의 세트 테마 "밤의 책상"을 앱 색으로 넓힌 예 */
+[data-theme="night-desk"] {
+  --background: #1f2a44;
+  --foreground: #f5f1e8;
+  --card: #283552;
+  --card-foreground: #f5f1e8;
+  --popover: #283552;
+  --popover-foreground: #f5f1e8;
+  --primary: #f6c945;
+  --primary-foreground: #1f2a44;
+  --secondary: #334262;
+  --secondary-foreground: #f5f1e8;
+  --muted: #334262;
+  --muted-foreground: #b8b3a8;
+  --accent: #334262;
+  --accent-foreground: #f5f1e8;
+  --destructive: #e57373;
+  --border: #3b4a6b;
+  --input: #3b4a6b;
+  --ring: #f6c945;
+  --reward: #f6c945;
+  --reward-foreground: #1f2a44;
+  --pending: #7f9cc0;
+  --postponed: #6f6a62;
+  --shadow-card: 0 2px 0 rgb(0 0 0 / 0.25);
 }
 
-@media (prefers-color-scheme: dark) {
+/* 동작 줄이기 설정이면 모션 시간을 0으로 (2.3 ⑤) */
+@media (prefers-reduced-motion: reduce) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --duration-fast: 0ms;
+    --duration-reward: 0ms;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@theme inline {
+  --font-sans:
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-reward: var(--reward);
+  --color-reward-foreground: var(--reward-foreground);
+  --color-pending: var(--pending);
+  --color-postponed: var(--postponed);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --shadow-card: var(--shadow-card);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
