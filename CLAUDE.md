@@ -101,5 +101,5 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 
 - 기획이나 구조가 바뀌면 `docs/plan.md` 또는 `docs/implementation-plan.md`의 변경 이력에 한 줄 남긴다.
 - 대안을 비교해서 고른 기술 결정은 `docs/adr/`에 새 ADR로 남긴다.
-- 커밋 메시지는 Conventional Commits 형식, 설명은 한국어. 예: `feat(missions): 기한형 미션 추가`
+- 커밋 메시지는 `docs/commit-convention.md`를 따른다. Conventional Commits 형식, 설명은 한국어, scope는 문서의 목록에서 고른다. 예: `feat(missions): 기한형 미션 추가`
 - 시드 데이터를 바꾸면 `npx tsx seed/validate.ts`를 통과시킨다.
