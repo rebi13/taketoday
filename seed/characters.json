@@ -16,19 +16,8 @@
       "concept": "볼이 통통한 둥근 실루엣. 먼지토끼·고양이와 크기·둥근 느낌을 맞춤"
     }
   ],
-  "parts": [
-    "body",
-    "eyes",
-    "mouth",
-    "ears",
-    "tail",
-    "cheeks"
-  ],
-  "anchors": [
-    "head",
-    "body",
-    "paws"
-  ],
+  "parts": ["body", "eyes", "mouth", "ears", "tail", "cheeks"],
+  "anchors": ["head", "body", "paws"],
   "reactions": [
     {
       "key": "idle",
@@ -74,16 +63,8 @@
     }
   ],
   "idleMotion": {
-    "periodSeconds": [
-      2,
-      4
-    ],
-    "moves": [
-      "breathe",
-      "blink",
-      "ear-twitch",
-      "tail-sway"
-    ],
+    "periodSeconds": [2, 4],
+    "moves": ["breathe", "blink", "ear-twitch", "tail-sway"],
     "respectReducedMotion": true,
     "pauseWhenHidden": true
   }

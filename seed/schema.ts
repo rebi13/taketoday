@@ -3,11 +3,29 @@ import { z } from "zod";
 // 시드 데이터 스키마. 앱에서는 src/server/db/seed 단계에서 이 스키마로 검증한 뒤 삽입한다.
 
 export const zoneIdSchema = z.enum([
-  "desk", "bedroom", "closet", "kitchen", "fridge", "bathroom", "living",
-  "entrance", "laundry", "trash", "supplies", "pet", "plant", "car",
+  "desk",
+  "bedroom",
+  "closet",
+  "kitchen",
+  "fridge",
+  "bathroom",
+  "living",
+  "entrance",
+  "laundry",
+  "trash",
+  "supplies",
+  "pet",
+  "plant",
+  "car",
 ]);
 
-export const conditionTagSchema = z.enum(["pet", "plant", "car", "aircon", "humidifier"]);
+export const conditionTagSchema = z.enum([
+  "pet",
+  "plant",
+  "car",
+  "aircon",
+  "humidifier",
+]);
 export const seasonSchema = z.enum(["spring", "summer", "autumn", "winter"]);
 
 export const zoneSchema = z.object({
@@ -33,15 +51,29 @@ export const missionTemplateSchema = z.object({
 });
 
 export const slotTypeSchema = z.enum([
-  "wallpaper", "floor", "window", "furniture_left", "furniture_right",
-  "wall_deco", "floor_deco", "costume",
+  "wallpaper",
+  "floor",
+  "window",
+  "furniture_left",
+  "furniture_right",
+  "wall_deco",
+  "floor_deco",
+  "costume",
 ]);
 
 export const itemSchema = z.object({
   id: z.string().regex(/^(starter|shop)-\d{2}$/),
   name: z.string().min(1),
   slotType: slotTypeSchema,
-  category: z.enum(["wallpaper", "floor", "window_view", "furniture_large", "furniture", "prop", "costume"]),
+  category: z.enum([
+    "wallpaper",
+    "floor",
+    "window_view",
+    "furniture_large",
+    "furniture",
+    "prop",
+    "costume",
+  ]),
   price: z.number().int().min(0),
   acquisition: z.enum(["starter", "shop"]),
   setId: z.enum(["cozy-morning", "green-room", "night-desk"]).nullable(),
@@ -64,27 +96,41 @@ const boxSchema = z.object({
 });
 
 export const roomSlotsSchema = z.object({
-  canvas: z.object({ aspectRatio: z.literal("4:3"), unit: z.literal("percent") }),
+  canvas: z.object({
+    aspectRatio: z.literal("4:3"),
+    unit: z.literal("percent"),
+  }),
   defaults: z.record(z.string(), z.string()),
-  slots: z.array(
-    z.object({
-      key: z.string(),
-      slotType: slotTypeSchema,
-      label: z.string(),
-      z: z.number().int(),
-      box: boxSchema.nullable(),
-      note: z.string().optional(),
-    }),
-  ).length(10),
+  slots: z
+    .array(
+      z.object({
+        key: z.string(),
+        slotType: slotTypeSchema,
+        label: z.string(),
+        z: z.number().int(),
+        box: boxSchema.nullable(),
+        note: z.string().optional(),
+      }),
+    )
+    .length(10),
 });
 
 export const charactersSchema = z.object({
-  types: z.array(z.object({ id: z.string(), name: z.string(), concept: z.string() })).length(3),
+  types: z
+    .array(z.object({ id: z.string(), name: z.string(), concept: z.string() }))
+    .length(3),
   parts: z.array(z.string()),
   anchors: z.array(z.enum(["head", "body", "paws"])),
-  reactions: z.array(
-    z.object({ key: z.string(), name: z.string(), when: z.string(), stage: z.enum(["mvp", "phase2"]) }),
-  ).length(7),
+  reactions: z
+    .array(
+      z.object({
+        key: z.string(),
+        name: z.string(),
+        when: z.string(),
+        stage: z.enum(["mvp", "phase2"]),
+      }),
+    )
+    .length(7),
   idleMotion: z.object({
     periodSeconds: z.tuple([z.number(), z.number()]),
     moves: z.array(z.string()),
