@@ -44,6 +44,10 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 - `src/server/**` 파일은 `import "server-only"`로 시작한다.
 - `server/domain`은 DB·네트워크를 모르는 순수 함수다. 같은 폴더에 `*.test.ts`를 둔다.
 - `server/services`의 함수 하나 = 트랜잭션 하나. "읽기 → domain 함수 → 한 번에 쓰기" 순서를 지킨다.
+- 위 import 규칙은 `eslint.config.mjs`의 `boundaries/dependencies`가 검사한다. 허용 목록 밖은 모두 막는다.
+  - `server/services`는 `app`과 `features`(Server Action)에서만 부른다.
+  - `server`는 `shared` 중 `lib`·`config`만 쓴다. `services`만 다른 server 슬라이스를 조합하고, 예외는 `auth → db`(Auth.js adapter) 하나다.
+  - `shared/*` 안에서는 서로 가져올 수 있고 `index.ts` 제한도 없다(shadcn이 `shared/ui/button`처럼 파일 경로로 가져온다).
 
 ## 도메인 규칙 (바꾸면 서비스가 깨지는 것)
 
