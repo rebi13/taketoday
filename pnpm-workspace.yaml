@@ -1,3 +1,5 @@
 allowBuilds:
+  # esbuild는 플랫폼별 바이너리 패키지(@esbuild/*)로 동작해 설치 스크립트가 필요 없다
+  esbuild: false
   sharp: false
   unrs-resolver: false

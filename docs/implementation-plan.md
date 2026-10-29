@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-10-29 | GitHub Actions CI: PR·main push마다 커밋 메시지, lint, typecheck, 포맷, 테스트, 시드 검증, 빌드 |
 | 2026-10-29 | 층 간 import 규칙을 eslint-plugin-boundaries로 강제 (3.1). services 호출은 app·features만, server는 shared/lib·config만 |
 | 2026-10-29 | Next.js 16 앱 생성, pnpm 스크립트(typecheck는 `next typegen` 후 tsc), Prettier(Markdown 제외), Vitest, commitlint·husky 적용 |
 | 2026-10-29 | 커밋 규칙 확정: docs/commit-convention.md, commitlint.config.mjs (M0에서 commitlint·husky 설치) |
