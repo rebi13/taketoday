@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-10-29 | Next.js 16 앱 생성, pnpm 스크립트(typecheck는 `next typegen` 후 tsc), Prettier(Markdown 제외), Vitest, commitlint·husky 적용 |
 | 2026-10-29 | 커밋 규칙 확정: docs/commit-convention.md, commitlint.config.mjs (M0에서 commitlint·husky 설치) |
 | 2026-10-28 | 폴더블(폴드·플립) 대응 반응형 규칙 추가 (2.3 ⑤·⑥) |
 | 2026-10-29 | 완료 기준 내 기준으로 바꾸기·되돌리기를 M1에 추가 |

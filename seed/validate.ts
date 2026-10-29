@@ -1,4 +1,4 @@
-// 실행: npx tsx seed/validate.ts
+// 실행: pnpm seed:validate
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";

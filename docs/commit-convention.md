@@ -1,7 +1,7 @@
 # 커밋 규칙
 
 > 2026-10-29
-> [Conventional Commits 1.0](https://www.conventionalcommits.org/ko/v1.0.0/)을 따른다. 설명과 본문은 한국어로 쓴다. M0에서 commitlint로 검사를 붙인다(`commitlint.config.mjs`).
+> [Conventional Commits 1.0](https://www.conventionalcommits.org/ko/v1.0.0/)을 따른다. 설명과 본문은 한국어로 쓴다. 커밋할 때 husky `commit-msg` 훅이 commitlint로 검사한다(`commitlint.config.mjs`).
 
 ## 1. 형식
 
@@ -110,7 +110,7 @@ fix(settlement): 취소 후 다시 완료한 미션을 한 번만 보상
 - 함께 묶어야 하는 것:
   - 스키마 변경과 그 마이그레이션 파일 (`pnpm db:generate` 결과)
   - 기획·구조 변경과 `docs/plan.md`·`docs/implementation-plan.md` 변경 이력 한 줄
-  - 시드 변경과 `npx tsx seed/validate.ts` 통과
+  - 시드 변경과 `pnpm seed:validate` 통과
   - 새 컴포넌트·변형과 `/playground` 추가
   - 도메인 함수 변경과 같은 폴더의 `*.test.ts`
 - 파일 이름을 지정해 스테이징한다. `git add .`, `git add -A`는 쓰지 않는다.
