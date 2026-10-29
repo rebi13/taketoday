@@ -167,10 +167,47 @@ const layerBoundaries = {
   },
 };
 
+// 색은 globals.css의 토큰으로만 쓴다 (implementation-plan 2.3 ①).
+// bg-[#f2994a], text-[rgb(...)] 같은 임의 값 색을 막는다. bg-[var(--x)] 같은 토큰 참조는 허용한다.
+const ARBITRARY_COLOR =
+  "/\\[[^\\]]*(#[0-9a-fA-F]{3}|rgba?\\(|hsla?\\(|oklch\\(|oklab\\()/";
+const ARBITRARY_COLOR_MESSAGE =
+  "색은 globals.css 토큰(bg-primary, text-reward 등)으로만 쓴다. 새 색이 필요하면 토큰을 추가한다.";
+
+const designTokens = {
+  files: ["src/**/*.{ts,tsx}"],
+  rules: {
+    "no-restricted-syntax": [
+      "error",
+      {
+        selector: `Literal[value=${ARBITRARY_COLOR}]`,
+        message: ARBITRARY_COLOR_MESSAGE,
+      },
+      {
+        selector: `TemplateElement[value.raw=${ARBITRARY_COLOR}]`,
+        message: ARBITRARY_COLOR_MESSAGE,
+      },
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        paths: [
+          {
+            name: "cn",
+            message:
+              "shadcn 레지스트리가 넣는 import다. @/shared/lib/utils의 cn을 쓴다.",
+          },
+        ],
+      },
+    ],
+  },
+};
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   layerBoundaries,
+  designTokens,
   // 포맷은 Prettier가 맡는다. 겹치는 ESLint 규칙을 끈다.
   prettier,
   // Override default ignores of eslint-config-next.
