@@ -25,7 +25,7 @@
 | 마이그레이션 생성 | `pnpm db:generate` (Drizzle 도입 후) |
 | 시드 검증 | `pnpm seed:validate` |
 
-작업을 마치면 타입 체크, 린트, 포맷 검사, 관련 테스트를 돌린다. 커밋 메시지는 `commit-msg` 훅(commitlint)이 검사한다.
+작업을 마치면 타입 체크, 린트, 포맷 검사, 관련 테스트를 돌린다. 커밋 메시지는 `commit-msg` 훅(commitlint)이 검사한다. CI(`.github/workflows/ci.yml`)가 PR마다 같은 검사와 시드 검증·빌드를 다시 돌린다.
 
 ## 폴더 구조와 의존 규칙
 
