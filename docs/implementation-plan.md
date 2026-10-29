@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-10-29 | 층 간 import 규칙을 eslint-plugin-boundaries로 강제 (3.1). services 호출은 app·features만, server는 shared/lib·config만 |
 | 2026-10-29 | Next.js 16 앱 생성, pnpm 스크립트(typecheck는 `next typegen` 후 tsc), Prettier(Markdown 제외), Vitest, commitlint·husky 적용 |
 | 2026-10-29 | 커밋 규칙 확정: docs/commit-convention.md, commitlint.config.mjs (M0에서 commitlint·husky 설치) |
 | 2026-10-28 | 폴더블(폴드·플립) 대응 반응형 규칙 추가 (2.3 ⑤·⑥) |
@@ -301,7 +302,7 @@ taketoday/
 
 ### 3.1 규칙
 
-1. **가져오기(import)는 위에서 아래로만**: `app → widgets → features → entities → shared`. 같은 층끼리도 서로 가져오지 않는다(예: `features/a`가 `features/b`를 가져오지 않음). ESLint 규칙(eslint-plugin-boundaries 등)으로 강제한다.
+1. **가져오기(import)는 위에서 아래로만**: `app → widgets → features → entities → shared`. 같은 층끼리도 서로 가져오지 않는다(예: `features/a`가 `features/b`를 가져오지 않음). eslint-plugin-boundaries의 `boundaries/dependencies`로 강제한다(`eslint.config.mjs`).
 2. **화면 코드는 `server/services`만 부른다.** Server Action·Route Handler에서 서비스 함수를 호출하고, 화면에서 DB나 도메인 함수를 직접 쓰지 않는다. `server/` 파일에는 `import 'server-only'`를 넣어 클라이언트 번들에 섞이면 빌드가 실패하게 한다.
 3. **`server/domain`은 DB를 모른다.** 입력을 받아 결과만 돌려주는 순수 함수로 두고, 같은 폴더에 테스트를 둔다.
 4. **각 슬라이스는 `index.ts`로만 밖에 공개**한다. 다른 곳에서는 슬라이스 내부 파일 경로를 직접 가져오지 않는다.
