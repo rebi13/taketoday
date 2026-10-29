@@ -268,10 +268,7 @@
     "estimatedMinutes": 10,
     "difficulty": "high",
     "conditionTags": [],
-    "seasons": [
-      "spring",
-      "autumn"
-    ],
+    "seasons": ["spring", "autumn"],
     "shareable": false,
     "defaultOn": false
   },
@@ -985,12 +982,8 @@
     "cycleDays": 3,
     "estimatedMinutes": 5,
     "difficulty": "low",
-    "conditionTags": [
-      "humidifier"
-    ],
-    "seasons": [
-      "winter"
-    ],
+    "conditionTags": ["humidifier"],
+    "seasons": ["winter"],
     "shareable": false,
     "defaultOn": false
   },
@@ -1028,12 +1021,8 @@
     "cycleDays": 30,
     "estimatedMinutes": 10,
     "difficulty": "mid",
-    "conditionTags": [
-      "aircon"
-    ],
-    "seasons": [
-      "summer"
-    ],
+    "conditionTags": ["aircon"],
+    "seasons": ["summer"],
     "shareable": false,
     "defaultOn": false
   },
@@ -1097,9 +1086,7 @@
     "cycleDays": 1,
     "estimatedMinutes": 2,
     "difficulty": "low",
-    "conditionTags": [
-      "pet"
-    ],
+    "conditionTags": ["pet"],
     "seasons": [],
     "shareable": true,
     "defaultOn": true
@@ -1112,9 +1099,7 @@
     "cycleDays": 1,
     "estimatedMinutes": 3,
     "difficulty": "low",
-    "conditionTags": [
-      "pet"
-    ],
+    "conditionTags": ["pet"],
     "seasons": [],
     "shareable": true,
     "defaultOn": false
@@ -1127,9 +1112,7 @@
     "cycleDays": 1,
     "estimatedMinutes": 5,
     "difficulty": "low",
-    "conditionTags": [
-      "pet"
-    ],
+    "conditionTags": ["pet"],
     "seasons": [],
     "shareable": true,
     "defaultOn": true
@@ -1142,9 +1125,7 @@
     "cycleDays": 3,
     "estimatedMinutes": 5,
     "difficulty": "low",
-    "conditionTags": [
-      "pet"
-    ],
+    "conditionTags": ["pet"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1157,9 +1138,7 @@
     "cycleDays": 3,
     "estimatedMinutes": 5,
     "difficulty": "low",
-    "conditionTags": [
-      "pet"
-    ],
+    "conditionTags": ["pet"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1172,9 +1151,7 @@
     "cycleDays": 14,
     "estimatedMinutes": 2,
     "difficulty": "low",
-    "conditionTags": [
-      "pet"
-    ],
+    "conditionTags": ["pet"],
     "seasons": [],
     "shareable": true,
     "defaultOn": false
@@ -1187,9 +1164,7 @@
     "cycleDays": 14,
     "estimatedMinutes": 10,
     "difficulty": "mid",
-    "conditionTags": [
-      "pet"
-    ],
+    "conditionTags": ["pet"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1202,9 +1177,7 @@
     "cycleDays": 3,
     "estimatedMinutes": 5,
     "difficulty": "low",
-    "conditionTags": [
-      "plant"
-    ],
+    "conditionTags": ["plant"],
     "seasons": [],
     "shareable": false,
     "defaultOn": true
@@ -1217,9 +1190,7 @@
     "cycleDays": 3,
     "estimatedMinutes": 1,
     "difficulty": "low",
-    "conditionTags": [
-      "plant"
-    ],
+    "conditionTags": ["plant"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1232,9 +1203,7 @@
     "cycleDays": 7,
     "estimatedMinutes": 3,
     "difficulty": "low",
-    "conditionTags": [
-      "plant"
-    ],
+    "conditionTags": ["plant"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1247,9 +1216,7 @@
     "cycleDays": 30,
     "estimatedMinutes": 5,
     "difficulty": "low",
-    "conditionTags": [
-      "plant"
-    ],
+    "conditionTags": ["plant"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1262,9 +1229,7 @@
     "cycleDays": 30,
     "estimatedMinutes": 1,
     "difficulty": "low",
-    "conditionTags": [
-      "plant"
-    ],
+    "conditionTags": ["plant"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1277,12 +1242,8 @@
     "cycleDays": 365,
     "estimatedMinutes": 10,
     "difficulty": "high",
-    "conditionTags": [
-      "plant"
-    ],
-    "seasons": [
-      "spring"
-    ],
+    "conditionTags": ["plant"],
+    "seasons": ["spring"],
     "shareable": false,
     "defaultOn": false
   },
@@ -1294,9 +1255,7 @@
     "cycleDays": 7,
     "estimatedMinutes": 3,
     "difficulty": "low",
-    "conditionTags": [
-      "car"
-    ],
+    "conditionTags": ["car"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1309,9 +1268,7 @@
     "cycleDays": 30,
     "estimatedMinutes": 5,
     "difficulty": "low",
-    "conditionTags": [
-      "car"
-    ],
+    "conditionTags": ["car"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false
@@ -1324,9 +1281,7 @@
     "cycleDays": 90,
     "estimatedMinutes": 2,
     "difficulty": "low",
-    "conditionTags": [
-      "car"
-    ],
+    "conditionTags": ["car"],
     "seasons": [],
     "shareable": false,
     "defaultOn": false

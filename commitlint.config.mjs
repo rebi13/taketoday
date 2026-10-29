@@ -2,7 +2,7 @@
 // scope를 추가하면 문서 3장 표도 같은 커밋에서 고친다.
 
 /** @type {import('@commitlint/types').UserConfig} */
-export default {
+const config = {
   extends: ["@commitlint/config-conventional"],
   rules: {
     "scope-enum": [
@@ -57,3 +57,5 @@ export default {
     },
   ],
 };
+
+export default config;

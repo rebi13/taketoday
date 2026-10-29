@@ -12,7 +12,7 @@
 | `room-slots.json` | 방 슬롯 10개와 위치(4:3 캔버스 대비 %) | 10 |
 | `characters.json` | 캐릭터 3종, 반응 7종, 대기 움직임 규칙 | 3 |
 | `schema.ts` | zod 스키마 | |
-| `validate.ts` | 검증 스크립트 (`npx tsx seed/validate.ts`) | |
+| `validate.ts` | 검증 스크립트 (`pnpm seed:validate`) | |
 
 ## 필드 메모
 

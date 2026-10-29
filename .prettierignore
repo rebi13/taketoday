@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+.next/
+next-env.d.ts
+# 문서는 손으로 정리한다. 표 칸 맞춤이 변경 이력을 흐린다.
+*.md

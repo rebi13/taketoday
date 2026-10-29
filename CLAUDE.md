@@ -11,19 +11,21 @@
 
 ## 명령어
 
-> M0에서 확정 후 갱신한다. 패키지 매니저는 pnpm 기준.
+> 패키지 매니저는 pnpm. E2E와 마이그레이션 명령은 해당 도구를 붙일 때 추가한다.
 
 | 목적 | 명령 |
 |---|---|
 | 개발 서버 | `pnpm dev` |
+| 빌드 | `pnpm build` |
 | 타입 체크 | `pnpm typecheck` |
 | 린트 | `pnpm lint` |
+| 포맷 | `pnpm format` (검사만: `pnpm format:check`) |
 | 단위 테스트 | `pnpm test` |
-| E2E | `pnpm test:e2e` |
-| 마이그레이션 생성 | `pnpm db:generate` |
-| 시드 검증 | `npx tsx seed/validate.ts` |
+| E2E | `pnpm test:e2e` (Playwright 도입 후) |
+| 마이그레이션 생성 | `pnpm db:generate` (Drizzle 도입 후) |
+| 시드 검증 | `pnpm seed:validate` |
 
-작업을 마치면 타입 체크, 린트, 관련 테스트를 돌린다.
+작업을 마치면 타입 체크, 린트, 포맷 검사, 관련 테스트를 돌린다. 커밋 메시지는 `commit-msg` 훅(commitlint)이 검사한다.
 
 ## 폴더 구조와 의존 규칙
 
@@ -102,4 +104,4 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 - 기획이나 구조가 바뀌면 `docs/plan.md` 또는 `docs/implementation-plan.md`의 변경 이력에 한 줄 남긴다.
 - 대안을 비교해서 고른 기술 결정은 `docs/adr/`에 새 ADR로 남긴다.
 - 커밋 메시지는 `docs/commit-convention.md`를 따른다. Conventional Commits 형식, 설명은 한국어, scope는 문서의 목록에서 고른다. 예: `feat(missions): 기한형 미션 추가`
-- 시드 데이터를 바꾸면 `npx tsx seed/validate.ts`를 통과시킨다.
+- 시드 데이터를 바꾸면 `pnpm seed:validate`를 통과시킨다.
