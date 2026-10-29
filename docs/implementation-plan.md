@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-10-29 | 외부 서비스 연결 가이드(docs/setup.md), .env.example, Vercel 함수 리전 sin1. 구글 리디렉션 주소 때문에 Vercel 연결을 로그인보다 먼저 한다 |
 | 2026-10-29 | GitHub Actions CI: PR·main push마다 커밋 메시지, lint, typecheck, 포맷, 테스트, 시드 검증, 빌드 |
 | 2026-10-29 | 층 간 import 규칙을 eslint-plugin-boundaries로 강제 (3.1). services 호출은 app·features만, server는 shared/lib·config만 |
 | 2026-10-29 | Next.js 16 앱 생성, pnpm 스크립트(typecheck는 `next typegen` 후 tsc), Prettier(Markdown 제외), Vitest, commitlint·husky 적용 |
