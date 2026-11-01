@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { getSessionUser, signInWithGoogle } from "@/server/services";
-import { Button } from "@/shared/ui/button";
+import { GoogleSignInButton } from "@/features/sign-in";
+import { getSessionUser } from "@/server/services";
 
 // S01 랜딩. 소셜 로그인만 쓰고 MVP는 구글 하나다(screen-flow).
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
@@ -17,21 +17,14 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         </p>
       </div>
       {/* 카카오·네이버 버튼이 이 아래에 붙는다(기획서 9장) */}
-      <form action={loginWithGoogle} className="grid w-full max-w-sm gap-3">
-        <Button type="submit" size="lg">
-          Google로 계속하기
-        </Button>
+      <div className="grid w-full max-w-sm gap-3">
+        <GoogleSignInButton />
         <Suspense>
           <LoginError searchParams={searchParams} />
         </Suspense>
-      </form>
+      </div>
     </main>
   );
-}
-
-async function loginWithGoogle() {
-  "use server";
-  await signInWithGoogle();
 }
 
 /** 이미 로그인했으면 홈으로 보낸다 */
