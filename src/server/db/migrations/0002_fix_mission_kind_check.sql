@@ -1,0 +1,3 @@
+ALTER TABLE "missions" DROP CONSTRAINT "missions_kind_fields";--> statement-breakpoint
+ALTER TABLE "missions" ADD CONSTRAINT "missions_kind_fields" CHECK (("missions"."kind" = 'recurring' and "missions"."cycle_days" is not null and "missions"."cycle_days" > 0 and "missions"."due_date" is null)
+        or ("missions"."kind" = 'once' and "missions"."due_date" is not null and "missions"."cycle_days" is null));

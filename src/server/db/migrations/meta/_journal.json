@@ -8,6 +8,20 @@
       "when": 1793506654330,
       "tag": "0000_auth_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793510775421,
+      "tag": "0001_mission_base",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793510867803,
+      "tag": "0002_fix_mission_kind_check",
+      "breakpoints": true
     }
   ]
 }

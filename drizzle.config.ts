@@ -10,7 +10,7 @@ if (!url)
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/server/db/schema.ts",
+  schema: "./src/server/db/schema/index.ts",
   out: "./src/server/db/migrations",
   // 마이그레이션은 풀링을 거치지 않는 직접 연결로 돌린다
   dbCredentials: { url },
