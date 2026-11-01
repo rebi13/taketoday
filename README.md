@@ -14,6 +14,7 @@
 | [화면 흐름](docs/screen-flow.md) | 화면·팝업 ID와 흐름도 |
 | [커밋 규칙](docs/commit-convention.md) | 커밋 메시지 형식, type·scope, 커밋 단위 |
 | [외부 서비스 연결](docs/setup.md) | Neon·Vercel·구글 로그인 계정 설정, 환경변수 |
+| [PR 자동 리뷰](docs/setup-code-review.md) | Claude Code GitHub Actions 설정, `@claude` 사용법 |
 | [ADR](docs/adr/) | 기술 결정 기록 |
 | [시드 데이터](seed/) | 구역, 기본 미션 99개, 아이템 30종, 슬롯, 캐릭터 |
 
