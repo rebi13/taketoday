@@ -6,7 +6,7 @@ import Google from "next-auth/providers/google";
 import { accounts, getDb, sessions, users } from "@/server/db";
 import { serverEnv } from "@/shared/config/env";
 
-// 구글에서 받는 정보는 이메일만 저장한다(기획서 13장).
+// 구글에서 받는 정보는 이메일만 저장한다(기획서 17.2).
 // - 사용자: 이름·사진을 버린다
 // - 로그인 연결(Account): OAuth 토큰을 쓰지 않으므로 식별자만 남긴다
 function emailOnlyAdapter(): Adapter {
