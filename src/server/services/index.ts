@@ -9,7 +9,11 @@ export {
 } from "./session";
 export {
   agreeToTerms,
+  chooseCharacter,
   getAppEntry,
+  listCharacterTypes,
   type AgreeToTermsResult,
   type AppEntry,
+  type CharacterTypeOption,
+  type ChooseCharacterResult,
 } from "./onboarding";
