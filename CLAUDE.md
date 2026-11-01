@@ -55,7 +55,7 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 
 ## 도메인 규칙 (바꾸면 서비스가 깨지는 것)
 
-- **날짜**: "하루"는 항상 Asia/Seoul 기준 `localDate`(YYYY-MM-DD). `new Date()`로 날짜를 직접 자르지 말고 `shared/lib`의 날짜 함수 하나만 쓴다. 자정 경계 테스트를 반드시 둔다.
+- **날짜**: "하루"는 항상 Asia/Seoul 기준 `localDate`(YYYY-MM-DD). `new Date()`로 날짜를 직접 자르지 말고 `@/shared/lib/date`(`localDate`, `addDays`, `diffDays`, `weekdayOf`, `localDateSchema`)만 쓴다. `toISOString().slice()` 같은 직접 자르기는 린트가 막는다. 자정 경계 테스트를 반드시 둔다.
 - **보상은 다음 날 정산**(ADR 0003). 완료 시에는 completion만 만들고 재화 거래를 만들지 않는다.
   - 정산: 취소 제외 → `completedAt` 순 → 미션별 첫 1건 → 앞에서 10건 × 10.
   - `daily_settlements`의 (user_id, local_date) 유니크로 한 번만 정산한다. 지연 정산(첫 요청 시)이 기본, cron은 백업.
@@ -65,7 +65,7 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 - **재화 잔액**은 `wallet_transactions` 합계. 저장된 값은 캐시일 뿐이다. 구매는 한 트랜잭션에서 잔액 확인 → 음수 거래 → 인벤토리 추가.
 - **미션 삭제**는 소프트 삭제(`deletedAt`). 기록과 정산 이력이 참조한다.
 - **탈퇴**: 즉시 `deactivated`(통계 제외), 30일 뒤 식별정보 파기. 통계 쿼리는 `active` 사용자만 집계한다.
-- 금액·상한 상수는 `shared/config` 한 곳에만 둔다. 숫자를 코드에 흩뿌리지 않는다.
+- 금액·상한 상수는 `shared/config/constants.ts` 한 곳에만 둔다. 숫자를 코드에 흩뿌리지 않는다.
 
 | 상수 | 값 |
 |---|---|
