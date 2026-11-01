@@ -74,7 +74,7 @@ classDef dP fill:#e6eff7,stroke:#e0742a,stroke-width:2.5px,stroke-dasharray:7 4,
 
 ## 2. 탭 구조
 
-넓은 화면(840px 이상, 폴드 펼침)에서는 하단 탭바 대신 왼쪽 세로 메뉴를 쓴다.
+탭은 4개다(세부 선택 ④). 설정은 탭이 아니라 홈 상단의 설정 버튼으로 들어간다. 넓은 화면(840px 이상, 폴드 펼침)에서는 하단 탭바 대신 왼쪽 세로 메뉴를 쓴다.
 
 ```mermaid
 flowchart TD
@@ -83,7 +83,7 @@ flowchart TD
   TAB --> S11["미션<br>S11"]:::screen
   TAB --> S16["기록<br>S16"]:::screen
   TAB --> S18["방<br>S18"]:::screen
-  TAB --> S20["설정<br>S20"]:::screen
+  S10 -- "상단 설정 버튼" --> S20["설정<br>S20"]:::screen
   S10 -. "방 영역 누르기" .-> S18
   S11 --> S12["S12 미션 상세"]:::screen
   S11 --> S13["S13 직접 만들기"]:::screen

@@ -97,7 +97,7 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 - `shared/ui`(shadcn 원본)에는 도메인 단어를 넣지 않는다.
 - shadcn 컴포넌트는 `pnpm exec shadcn add <이름>`으로 추가한다. 추가한 뒤 `import { cn } from "cn"`이 생기면 `@/shared/lib/utils`로 바꾸고(린트가 잡는다), 버튼처럼 누르는 요소의 높이를 44px 이상으로 맞춘다.
 - 테마는 `<html data-theme>`로 바꾼다. shadcn의 `dark:` 변형은 OS 다크 모드가 아니라 어두운 테마(`night-desk`)에서만 켜진다.
-- 모바일 우선. 폭 구간: 600 미만 한 열, 600~839 카드 2열, 840 이상 두 영역 분할 + 왼쪽 세로 메뉴. 높이는 `100dvh`.
+- 모바일 우선. 폭 구간: 600 미만 한 열, 600~839 카드 2열(`mid:`), 840 이상 두 영역 분할 + 왼쪽 세로 메뉴(`wide:`). Tailwind 기본 `sm:`·`md:`·`lg:`는 쓰지 않는다. 높이는 `100dvh`.
 - 화면 크기를 JS 상태로 계산하지 않는다(폴드 접기·펼치기 대응). 레이아웃은 미디어 쿼리, 놓이는 자리에 따라 달라지는 컴포넌트는 컨테이너 쿼리.
 - 방은 4:3 캔버스, 슬롯 위치는 `seed/room-slots.json`의 % 값.
 - 버튼 높이 최소 44px. 모션은 보상·캐릭터에만, `prefers-reduced-motion`이면 끈다.

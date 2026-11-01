@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-01 | 앱 레이아웃(#11): 탭 4개(홈·미션·기록·방), 설정은 홈 상단. 폭 구간 토큰 `mid:`(600)·`wide:`(840). 840 미만 하단 탭바, 이상 왼쪽 세로 메뉴(CSS만). 로그인 확인을 `(main)` 레이아웃으로 |
 | 2026-11-01 | 시드 적재 `pnpm db:seed`(#10): Vercel 빌드에서 마이그레이션 다음에 적용(ADR 0008), 템플릿 문장이 바뀌면 version을 올려 `user_modified`가 아닌 사용자 미션에 반영 |
 | 2026-11-01 | M1 스키마: users 서비스 필드, zones·mission_templates·mission_lists·missions·character_types·characters·user_rest_days(#9). `canAccessList()`는 순수 함수라 `server/auth`가 아닌 `server/domain`에 둠. Vitest에서 `server-only`를 빈 모듈로 |
 | 2026-11-01 | PR 자동 리뷰(Claude Code GitHub Actions, docs/setup-code-review.md). 남은 작업을 GitHub 이슈 #7~#48과 마일스톤 M0~M7로 옮김 |
