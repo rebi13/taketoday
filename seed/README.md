@@ -14,6 +14,8 @@
 | `schema.ts` | zod 스키마 | |
 | `validate.ts` | 검증 스크립트 (`pnpm seed:validate`) | |
 
+DB에는 `pnpm db:seed`(`src/server/db/seed/`)가 넣습니다. 운영은 Vercel 빌드에서 자동으로 적용됩니다([ADR 0008](../docs/adr/0008-seed-on-vercel-build.md)). 이름·완료 기준을 고치면 템플릿 버전이 올라가고, 그 미션을 켠 사용자 중 기준을 직접 고치지 않은 사람에게 새 문장이 반영됩니다.
+
 ## 필드 메모
 
 - `missions.json`

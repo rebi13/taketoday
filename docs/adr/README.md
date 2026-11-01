@@ -11,3 +11,4 @@
 | [0005](0005-ui-shadcn-tokens.md) | UI는 Tailwind + shadcn/ui, 값은 토큰으로만 | 승인 |
 | [0006](0006-character-svg.md) | 캐릭터는 부위별 SVG + 대기 움직임 | 승인 |
 | [0007](0007-migrate-on-vercel-build.md) | DB 마이그레이션은 Vercel 빌드에서 적용 | 승인 |
+| [0008](0008-seed-on-vercel-build.md) | 시드는 Vercel 빌드에서 마이그레이션 다음에 적용 | 승인 |

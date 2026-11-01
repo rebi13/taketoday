@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-01 | 시드 적재 `pnpm db:seed`(#10): Vercel 빌드에서 마이그레이션 다음에 적용(ADR 0008), 템플릿 문장이 바뀌면 version을 올려 `user_modified`가 아닌 사용자 미션에 반영 |
 | 2026-11-01 | M1 스키마: users 서비스 필드, zones·mission_templates·mission_lists·missions·character_types·characters·user_rest_days(#9). `canAccessList()`는 순수 함수라 `server/auth`가 아닌 `server/domain`에 둠. Vitest에서 `server-only`를 빈 모듈로 |
 | 2026-11-01 | PR 자동 리뷰(Claude Code GitHub Actions, docs/setup-code-review.md). 남은 작업을 GitHub 이슈 #7~#48과 마일스톤 M0~M7로 옮김 |
 | 2026-11-01 | Drizzle(Auth.js 테이블)·Auth.js 구글 로그인(DB 세션, 이메일만 저장)·`src/proxy.ts` 로그인 확인. Neon 브랜치 이름 `production`/`develop`. 마이그레이션은 Vercel 빌드에서 적용(ADR 0007) |

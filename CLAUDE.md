@@ -28,6 +28,7 @@
 | 마이그레이션 생성 | `pnpm db:generate` (스키마: `src/server/db/schema.ts`) |
 | 마이그레이션 적용 | `pnpm db:migrate` (로컬은 `.env.local`의 Neon `develop`. 운영은 Vercel 빌드가 적용, ADR 0007) |
 | 시드 검증 | `pnpm seed:validate` |
+| 시드 적용 | `pnpm db:seed` (구역·기본 미션·캐릭터를 DB에 upsert. 운영은 Vercel 빌드가 적용, ADR 0008) |
 
 작업을 마치면 타입 체크, 린트, 포맷 검사, 관련 테스트를 돌린다. 커밋 메시지는 `commit-msg` 훅(commitlint)이 검사한다. CI(`.github/workflows/ci.yml`)가 PR마다 같은 검사와 시드 검증·빌드를 다시 돌린다.
 
