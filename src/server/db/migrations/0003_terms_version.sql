@@ -1,0 +1,2 @@
+ALTER TABLE "users" ADD COLUMN "terms_version" text;--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_terms_agreed_pair" CHECK (("users"."terms_agreed_at" is null) = ("users"."terms_version" is null));
