@@ -174,9 +174,15 @@ const ARBITRARY_COLOR =
 const ARBITRARY_COLOR_MESSAGE =
   "색은 globals.css 토큰(bg-primary, text-reward 등)으로만 쓴다. 새 색이 필요하면 토큰을 추가한다.";
 
-const designTokens = {
+// "하루"는 shared/lib/date의 localDate()로만 자른다(CLAUDE.md "도메인 규칙 > 날짜").
+// toISOString().slice(0, 10)은 UTC 날짜라 서울 자정~09시에 하루가 어긋난다.
+const DATE_SLICING_MESSAGE =
+  "날짜는 @/shared/lib/date의 localDate()·addDays()로 다룬다. Date를 직접 자르면 시간대에 따라 하루가 어긋난다.";
+
+const projectRules = {
   files: ["src/**/*.{ts,tsx}"],
   rules: {
+    // 같은 규칙을 다른 블록에 또 쓰면 앞의 설정을 덮어쓰므로 한곳에 모은다
     "no-restricted-syntax": [
       "error",
       {
@@ -186,6 +192,16 @@ const designTokens = {
       {
         selector: `TemplateElement[value.raw=${ARBITRARY_COLOR}]`,
         message: ARBITRARY_COLOR_MESSAGE,
+      },
+      {
+        selector:
+          "CallExpression[callee.property.name=/^(slice|substring|substr|split)$/][callee.object.callee.property.name='toISOString']",
+        message: DATE_SLICING_MESSAGE,
+      },
+      {
+        selector:
+          "CallExpression[callee.property.name=/^(toLocaleDateString|toDateString)$/]",
+        message: DATE_SLICING_MESSAGE,
       },
     ],
     "no-restricted-imports": [
@@ -207,7 +223,7 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   layerBoundaries,
-  designTokens,
+  projectRules,
   // 포맷은 Prettier가 맡는다. 겹치는 ESLint 규칙을 끈다.
   prettier,
   // Override default ignores of eslint-config-next.
