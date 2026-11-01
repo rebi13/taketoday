@@ -74,7 +74,8 @@ export function WidthPreview({ src, id }: { src: string; id: string }) {
           id={id}
           src={src}
           title="화면 폭 미리보기"
-          className="h-dvh max-h-[48rem] rounded-md border bg-background"
+          // 테두리가 폭을 깎지 않게 content-box로: 840을 고르면 iframe 안쪽이 정확히 840이다
+          className="box-content h-dvh max-h-[48rem] rounded-md border bg-background"
           style={{ width }}
         />
       </div>
