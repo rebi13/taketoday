@@ -29,6 +29,13 @@
       "when": 1793512632061,
       "tag": "0003_terms_version",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793513786180,
+      "tag": "0004_nickname_unique",
+      "breakpoints": true
     }
   ]
 }
