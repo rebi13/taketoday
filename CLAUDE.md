@@ -9,6 +9,8 @@
 - 왜 그렇게 정했는지: `docs/adr/`
 - 초기 데이터: `seed/`
 - 외부 서비스(Neon·Vercel·구글 로그인) 설정과 환경변수: `docs/setup.md`
+- PR 자동 리뷰(Claude Code GitHub Actions): `docs/setup-code-review.md`
+- 남은 작업: GitHub 이슈와 마일스톤(M0~M7). 작업을 시작할 때 해당 이슈를 읽고, PR 본문에 이슈 번호를 단다
 
 ## 명령어
 

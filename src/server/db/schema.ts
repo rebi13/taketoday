@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 // Auth.js Drizzle adapter가 쓰는 테이블 (implementation-plan 4장).
-// 구글에서 받는 정보는 이메일만 저장한다(기획서 13장). name·image는 adapter가
+// 구글에서 받는 정보는 이메일만 저장한다(기획서 17.2). name·image는 adapter가
 // 요구해서 컬럼만 두고, server/auth에서 항상 null로 넣는다.
 
 export const users = pgTable("users", {

@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-01 | PR 자동 리뷰(Claude Code GitHub Actions, docs/setup-code-review.md). 남은 작업을 GitHub 이슈 #7~#48과 마일스톤 M0~M7로 옮김 |
 | 2026-11-01 | Drizzle(Auth.js 테이블)·Auth.js 구글 로그인(DB 세션, 이메일만 저장)·`src/proxy.ts` 로그인 확인. Neon 브랜치 이름 `production`/`develop`. 마이그레이션은 Vercel 빌드에서 적용(ADR 0007) |
 | 2026-10-29 | 외부 서비스 연결 가이드(docs/setup.md), .env.example, Vercel 함수 리전 sin1. 구글 리디렉션 주소 때문에 Vercel 연결을 로그인보다 먼저 한다 |
 | 2026-10-29 | 디자인 토큰 1차안(globals.css), shadcn/ui 기본 컴포넌트 6종(shared/ui), Pretendard, `/playground`. 임의 값 색 린트, 2.3 예시를 Tailwind 4 문법으로 |
