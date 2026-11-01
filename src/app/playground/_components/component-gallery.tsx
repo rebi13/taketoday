@@ -1,9 +1,11 @@
 import { PlusIcon } from "lucide-react";
 
+import { CharacterFigure } from "@/entities/character";
 import { GoogleSignInButton } from "@/features/sign-in";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { Input } from "@/shared/ui/input";
 import {
   Card,
   CardAction,
@@ -198,6 +200,29 @@ export function ComponentGallery() {
           <label className="flex min-h-11 items-center gap-3">
             <Checkbox aria-invalid /> 오류
           </label>
+        </div>
+      </Section>
+
+      <Section title="Input">
+        <p className="text-sm text-muted-foreground">
+          높이 44px, 글자 16px(iOS 확대 방지).
+        </p>
+        <div className="grid max-w-sm gap-3">
+          <Input placeholder="기본" />
+          <Input defaultValue="입력한 값" />
+          <Input placeholder="비활성" disabled />
+          <Input defaultValue="오류" aria-invalid />
+        </div>
+      </Section>
+
+      <Section title="CharacterFigure (entities/character, 임시 도형)">
+        <div className="flex flex-wrap gap-4">
+          {["dust-bunny", "cat", "hamster"].map((id) => (
+            <div key={id} className="flex flex-col items-center gap-1">
+              <CharacterFigure typeId={id} label={id} className="size-20" />
+              <span className="text-xs text-muted-foreground">{id}</span>
+            </div>
+          ))}
         </div>
       </Section>
 
