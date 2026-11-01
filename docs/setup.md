@@ -58,7 +58,7 @@
 2. 설정
    - Framework: Next.js (자동 인식)
    - Install Command: 기본값. `packageManager`(pnpm 12)를 따른다
-   - Build Command: 기본값으로 둔다. 저장소의 `vercel.json`이 `pnpm db:migrate && pnpm build`로 정한다([ADR 0007](adr/0007-migrate-on-vercel-build.md))
+   - Build Command: 기본값으로 둔다. 저장소의 `vercel.json`이 `pnpm db:migrate && pnpm db:seed && pnpm build`로 정한다([ADR 0007](adr/0007-migrate-on-vercel-build.md), [ADR 0008](adr/0008-seed-on-vercel-build.md))
    - 환경변수: 지금은 비워 둔다. 4번에서 넣는다
 3. 첫 배포가 끝나면 **Settings → Domains**에서 고정 주소를 확인한다. 보통 `https://<프로젝트 이름>.vercel.app`인데, 이름이 이미 쓰이고 있으면 다르게 붙는다. 이 프로젝트는 **`https://take-today.vercel.app`**이다(`taketoday.vercel.app`은 다른 사람의 사이트다).
    → 받아 올 값: 고정 주소. 이후 `taketoday.app`을 연결하면(M7) 4번의 `AUTH_REDIRECT_PROXY_URL`과 구글 리디렉션 주소를 새 도메인으로 바꾼다.

@@ -7,7 +7,7 @@
 Drizzle을 붙이면서 마이그레이션을 언제·어디서 DB에 적용할지 정해야 했다. 구현 계획 4장은 "운영 반영은 배포 파이프라인에서만"으로 정해 두었다. Neon은 `production`(운영)과 `develop`(프리뷰·로컬) 두 브랜치를 쓰고, Vercel 환경변수의 Production·Preview에 각각 연결돼 있다.
 
 ## 결정
-`vercel.json`의 `buildCommand`를 `pnpm db:migrate && pnpm build`로 둔다. 운영 배포는 `production` 브랜치에, PR 프리뷰 배포는 `develop` 브랜치에 같은 마이그레이션을 적용한다. 로컬에서는 `pnpm db:migrate`가 `.env.local`의 `develop`에 적용한다. GitHub Actions CI는 `pnpm build`만 돌리고 DB에 접근하지 않는다.
+`vercel.json`의 `buildCommand`를 `pnpm db:migrate && pnpm build`로 둔다. (이후 시드 단계가 사이에 들어갔다: [ADR 0008](0008-seed-on-vercel-build.md)) 운영 배포는 `production` 브랜치에, PR 프리뷰 배포는 `develop` 브랜치에 같은 마이그레이션을 적용한다. 로컬에서는 `pnpm db:migrate`가 `.env.local`의 `develop`에 적용한다. GitHub Actions CI는 `pnpm build`만 돌리고 DB에 접근하지 않는다.
 
 ## 고려한 대안
 | 대안 | 장점 | 단점 |
