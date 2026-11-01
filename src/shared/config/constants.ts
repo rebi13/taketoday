@@ -32,3 +32,7 @@ export const CHARACTER_NAME_MAX_LENGTH = 10;
  * 동의한 사용자에게 다시 동의를 받는다. 지금은 법률 검토 전 초안이다(기획서 17장, #41)
  */
 export const TERMS_VERSION = "2026-11-01";
+
+/** 닉네임 길이. 랜덤 닉네임(형용사+명사+숫자 4자리)이 최대 11자라 그보다 조금 넉넉히 */
+export const NICKNAME_MIN_LENGTH = 2;
+export const NICKNAME_MAX_LENGTH = 12;
