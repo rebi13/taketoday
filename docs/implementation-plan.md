@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-01 | M1 스키마: users 서비스 필드, zones·mission_templates·mission_lists·missions·character_types·characters·user_rest_days(#9). `canAccessList()`는 순수 함수라 `server/auth`가 아닌 `server/domain`에 둠. Vitest에서 `server-only`를 빈 모듈로 |
 | 2026-11-01 | PR 자동 리뷰(Claude Code GitHub Actions, docs/setup-code-review.md). 남은 작업을 GitHub 이슈 #7~#48과 마일스톤 M0~M7로 옮김 |
 | 2026-11-01 | Drizzle(Auth.js 테이블)·Auth.js 구글 로그인(DB 세션, 이메일만 저장)·`src/proxy.ts` 로그인 확인. Neon 브랜치 이름 `production`/`develop`. 마이그레이션은 Vercel 빌드에서 적용(ADR 0007) |
 | 2026-10-29 | 외부 서비스 연결 가이드(docs/setup.md), .env.example, Vercel 함수 리전 sin1. 구글 리디렉션 주소 때문에 Vercel 연결을 로그인보다 먼저 한다 |
@@ -289,11 +290,11 @@ taketoday/
 │  │
 │  └─ server/                   # 서버에서만 실행 ('server-only')
 │     ├─ db/                    # Drizzle 스키마, 클라이언트, 마이그레이션
-│     ├─ domain/                # 순수 함수: 정산, 추천, 상한, 알림 대상 (DB 의존 없음)
+│     ├─ domain/                # 순수 함수: 정산, 추천, 상한, 알림 대상, canAccessList() (DB 의존 없음)
 │     ├─ services/              # 트랜잭션 단위: completeMission, settleDay, purchaseItem ...
 │     ├─ ai/                    # LLM 래퍼, 프롬프트, 출력 스키마
 │     ├─ push/                  # web-push, QStash 래퍼
-│     └─ auth/                  # Auth.js 설정, 세션 헬퍼, canAccessList()
+│     └─ auth/                  # Auth.js 설정, 세션 헬퍼
 │
 ├─ seed/                        # 기본 미션 99개, 구역 14개, 아이템 30종, 캐릭터 3종 (JSON)
 ├─ public/                      # 아이템 이미지, 매니페스트 아이콘
@@ -484,12 +485,12 @@ taketoday/
 
 기획서 12.1을 구현 항목으로 옮겼다. M1~M3 코드 리뷰 때 확인한다.
 
-- [ ] mission_lists.owner_type 존재, 생성 시 `user` 고정
-- [ ] missions의 담당 방식·담당자 컬럼 nullable로 존재
+- [ ] mission_lists.owner_type 존재, 생성 시 `user` 고정 (컬럼은 #9에서 추가, 생성 코드는 온보딩 #14)
+- [x] missions의 담당 방식·담당자 컬럼 nullable로 존재
 - [ ] completions.user_id는 "수행자"로만 사용
 - [ ] wallet_transactions.reason에 `shared_reward` 정의
 - [ ] 정산 함수가 "받을 사람 목록 + 금액"을 반환
-- [ ] 리스트 접근 권한 확인이 `canAccessList()` 한 함수로 모여 있음
+- [x] 리스트 접근 권한 확인이 `canAccessList()` 한 함수로 모여 있음 (`server/domain/list-access.ts`)
 - [ ] 상한 카운트가 reason별로 분리
 - [ ] room_placements에 좌표 컬럼(nullable) 존재 — 2단계 자유 배치 대비
 - [ ] Auth.js에 provider 추가만으로 카카오·네이버 연결 가능

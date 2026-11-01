@@ -17,3 +17,12 @@ export const DEFAULT_DAILY_RECOMMEND_COUNT = 2;
 
 /** 저녁 알림 시각, 서울 기준 HH:mm (기획서 6.9) */
 export const EVENING_NOTIFY_TIME = "21:00";
+
+/** 미션 이름 최대 길이 (기획서 6.4) */
+export const MISSION_NAME_MAX_LENGTH = 40;
+
+/** 완료 기준 최대 길이 (기획서 6.4) */
+export const CHECK_CRITERIA_MAX_LENGTH = 80;
+
+/** 캐릭터 이름 최대 길이. 방 화면 말풍선에 한 줄로 들어가는 길이 */
+export const CHARACTER_NAME_MAX_LENGTH = 10;
