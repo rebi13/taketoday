@@ -78,7 +78,7 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 ## 공유 리스트 확장 대비 (MVP에는 없지만 지킬 것)
 
 - `mission_lists.owner_type`을 두고 MVP에서는 `user`만 만든다.
-- 리스트 접근 확인은 `canAccessList()` 하나로만.
+- 리스트 접근 확인은 `canAccessList()`(`server/domain`) 하나로만.
 - 정산 함수는 "받을 사람 목록 + 금액"을 돌려준다.
 - 상한은 거래 사유(`personal_reward`, `shared_reward`)별로 센다.
 
