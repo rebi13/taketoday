@@ -3,6 +3,7 @@ import { PlusIcon } from "lucide-react";
 import { GoogleSignInButton } from "@/features/sign-in";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
+import { Checkbox } from "@/shared/ui/checkbox";
 import {
   Card,
   CardAction,
@@ -177,6 +178,26 @@ export function ComponentGallery() {
               </SheetContent>
             </Sheet>
           ))}
+        </div>
+      </Section>
+
+      <Section title="Checkbox">
+        <p className="text-sm text-muted-foreground">
+          상자는 20px이고 누르는 영역은 44×44다.
+        </p>
+        <div className="flex flex-wrap items-center gap-6">
+          <label className="flex min-h-11 items-center gap-3">
+            <Checkbox /> 기본
+          </label>
+          <label className="flex min-h-11 items-center gap-3">
+            <Checkbox defaultChecked /> 체크됨
+          </label>
+          <label className="flex min-h-11 items-center gap-3">
+            <Checkbox disabled /> 비활성
+          </label>
+          <label className="flex min-h-11 items-center gap-3">
+            <Checkbox aria-invalid /> 오류
+          </label>
         </div>
       </Section>
 

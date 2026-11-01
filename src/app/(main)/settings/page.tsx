@@ -21,6 +21,11 @@ export default function SettingsPage() {
         <Suspense>
           <AccountEmail />
         </Suspense>
+        <div>
+          <Button asChild variant="link">
+            <Link href="/terms">약관·개인정보처리방침</Link>
+          </Button>
+        </div>
         <form action={logout}>
           <Button type="submit" variant="outline">
             로그아웃

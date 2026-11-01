@@ -61,6 +61,8 @@ export const users = pgTable(
     /** QStash에 예약해 둔 다음 기본 알림 메시지. 시간 변경 시 취소한다 */
     scheduledNotifyMessageId: text("scheduled_notify_message_id"),
     termsAgreedAt: timestamp("terms_agreed_at", { withTimezone: true }),
+    /** 동의한 약관 버전(shared/config TERMS_VERSION) */
+    termsVersion: text("terms_version"),
     onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   },
   (t) => [
@@ -68,6 +70,10 @@ export const users = pgTable(
     check(
       "users_daily_recommend_count_range",
       sql`${t.dailyRecommendCount} between 1 and ${sql.raw(String(DAILY_PERSONAL_REWARD_CAP))}`,
+    ),
+    check(
+      "users_terms_agreed_pair",
+      sql`(${t.termsAgreedAt} is null) = (${t.termsVersion} is null)`,
     ),
     check(
       "users_deactivated_at_matches_status",

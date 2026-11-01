@@ -16,6 +16,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // 로그인 화면, Auth.js 라우트, 개발용 시험장, 정적 파일(점이 들어간 경로)은 제외한다
-  matcher: ["/((?!login|api/|playground|_next/|.*\\..*).*)"],
+  // 로그인 화면, 약관(S22, 로그인 없이 봄), Auth.js 라우트, 개발용 시험장,
+  // 정적 파일(점이 들어간 경로)은 제외한다
+  matcher: ["/((?!login|terms|api/|playground|_next/|.*\\..*).*)"],
 };

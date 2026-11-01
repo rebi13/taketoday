@@ -26,3 +26,9 @@ export const CHECK_CRITERIA_MAX_LENGTH = 80;
 
 /** 캐릭터 이름 최대 길이. 방 화면 말풍선에 한 줄로 들어가는 길이 */
 export const CHARACTER_NAME_MAX_LENGTH = 10;
+
+/**
+ * 동의받는 약관·개인정보처리방침 버전(시행일). 본문을 바꾸면 올리고, 이전 버전에
+ * 동의한 사용자에게 다시 동의를 받는다. 지금은 법률 검토 전 초안이다(기획서 17장, #41)
+ */
+export const TERMS_VERSION = "2026-11-01";

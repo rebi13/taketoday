@@ -7,3 +7,9 @@ export {
   signOutUser,
   type SessionUser,
 } from "./session";
+export {
+  agreeToTerms,
+  getAppEntry,
+  type AgreeToTermsResult,
+  type AppEntry,
+} from "./onboarding";
