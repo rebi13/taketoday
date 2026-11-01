@@ -8,6 +8,12 @@ const serverEnvSchema = z.object({
   AUTH_SECRET: z.string().min(32),
   AUTH_GOOGLE_ID: z.string().min(1),
   AUTH_GOOGLE_SECRET: z.string().min(1),
+  // Vercel 운영·프리뷰에만 둔다. 이 값이 그대로 구글 redirect_uri가 되므로
+  // 대시보드에서 붙여 넣다 섞인 앞뒤 공백을 자르고 https 주소인지 확인한다.
+  AUTH_REDIRECT_PROXY_URL: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim() || undefined : v),
+    z.url({ protocol: /^https$/ }).optional(),
+  ),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

@@ -28,6 +28,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
   return {
     adapter: emailOnlyAdapter(),
     secret: env.AUTH_SECRET,
+    // 프리뷰 로그인은 고정 주소를 거쳐 돌아온다(docs/setup.md). 환경변수를 Auth.js가
+    // 직접 읽지 않게 검증한 값을 넘긴다. 로컬은 undefined
+    redirectProxyUrl: env.AUTH_REDIRECT_PROXY_URL,
     providers: [
       Google({
         clientId: env.AUTH_GOOGLE_ID,
