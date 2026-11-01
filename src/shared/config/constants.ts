@@ -36,3 +36,23 @@ export const TERMS_VERSION = "2026-11-01";
 /** 닉네임 길이. 랜덤 닉네임(형용사+명사+숫자 4자리)이 최대 11자라 그보다 조금 넉넉히 */
 export const NICKNAME_MIN_LENGTH = 2;
 export const NICKNAME_MAX_LENGTH = 12;
+
+/** 온보딩 S07의 기본 알림 시각 기본값, 서울 기준 HH:mm. 저녁 알림(21:00)과 떨어지게 아침으로 */
+export const DEFAULT_NOTIFY_TIME = "08:00";
+
+/** 온보딩 S05의 조건 태그. 고르면 그 조건의 기본 미션이 켜진다(기획서 8.6). seed/schema.ts와 같다 */
+export const CONDITION_TAGS = [
+  "pet",
+  "plant",
+  "car",
+  "aircon",
+  "humidifier",
+] as const;
+export type ConditionTag = (typeof CONDITION_TAGS)[number];
+
+/** 온보딩 S05의 거주 형태 */
+export const HOUSEHOLDS = ["solo", "shared"] as const;
+export type Household = (typeof HOUSEHOLDS)[number];
+
+/** 기본 알림이 이 시각(서울, HH:mm) 이후면 저녁 알림과 너무 가까워 저녁 알림을 보내지 않는다(기획서 6.9) */
+export const EVENING_NOTIFY_CUTOFF = "20:00";
