@@ -1,37 +1,23 @@
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
-import { getSessionUser, signOutUser } from "@/server/services";
+import { Settings } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 
-// S10 홈. M0에서는 로그인 확인용 빈 화면이다.
+// S10 홈. 오늘의 추천(M2)과 방(M4)이 들어올 자리다.
+// 설정은 탭이 아니라 홈 상단에서 들어간다(screen-flow 세부 선택 ④).
 export default function HomePage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
-      <h1 className="text-2xl font-semibold">오늘챙김</h1>
-      <Suspense>
-        <SignedInUser />
-      </Suspense>
+    <main className="flex flex-1 flex-col">
+      <header className="flex items-center justify-between px-4 pt-4">
+        <h1 className="text-xl font-semibold">오늘챙김</h1>
+        <Button asChild variant="ghost" size="icon" aria-label="설정">
+          <Link href="/settings">
+            <Settings aria-hidden />
+          </Link>
+        </Button>
+      </header>
+      <p className="px-4 pt-2 text-muted-foreground">
+        오늘의 추천이 곧 여기에 나와요
+      </p>
     </main>
   );
-}
-
-async function SignedInUser() {
-  const user = await getSessionUser();
-  if (!user) redirect("/login");
-  return (
-    <>
-      <p className="text-muted-foreground">{user.email}로 로그인했어요</p>
-      {/* S20 설정과 P21 로그아웃 확인이 생기면 그쪽으로 옮긴다 */}
-      <form action={logout}>
-        <Button type="submit" variant="outline">
-          로그아웃
-        </Button>
-      </form>
-    </>
-  );
-}
-
-async function logout() {
-  "use server";
-  await signOutUser();
 }

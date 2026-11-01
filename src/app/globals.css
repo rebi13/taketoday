@@ -56,6 +56,10 @@
   --z-floor: 40;
   --z-character: 50;
 
+  /* 앱 틀 */
+  --z-nav: 60; /* 하단 탭바는 방·카드 위에 */
+  --tab-bar-height: 4rem; /* 하단 탭바 높이. 본문은 이만큼 아래 여백을 둔다 */
+
   /* 구글 로그인 버튼. 구글 브랜드 가이드 값 그대로 쓰고 바꾸지 않는다(Light 테마) */
   --google-button: #ffffff;
   --google-button-foreground: #1f1f1f;
@@ -100,6 +104,14 @@
     --duration-fast: 0ms;
     --duration-reward: 0ms;
   }
+}
+
+/* 화면 폭 구간 (구현 계획 2.3 ⑥, Android 창 크기 등급).
+ * 좁음 600 미만은 기본. mid: 600 이상(카드 2열), wide: 840 이상(두 영역 분할 + 왼쪽 세로 메뉴).
+ * Tailwind 기본 sm·md·lg는 shadcn 컴포넌트가 쓰므로 덮어쓰지 않고 이름을 따로 둔다. */
+@theme {
+  --breakpoint-mid: 37.5rem;
+  --breakpoint-wide: 52.5rem;
 }
 
 @theme inline {
