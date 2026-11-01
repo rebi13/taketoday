@@ -985,7 +985,7 @@
     "conditionTags": ["humidifier"],
     "seasons": ["winter"],
     "shareable": false,
-    "defaultOn": false
+    "defaultOn": true
   },
   {
     "id": "supplies-02",
@@ -1024,7 +1024,7 @@
     "conditionTags": ["aircon"],
     "seasons": ["summer"],
     "shareable": false,
-    "defaultOn": false
+    "defaultOn": true
   },
   {
     "id": "supplies-05",
@@ -1258,7 +1258,7 @@
     "conditionTags": ["car"],
     "seasons": [],
     "shareable": false,
-    "defaultOn": false
+    "defaultOn": true
   },
   {
     "id": "car-02",
