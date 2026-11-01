@@ -32,28 +32,3 @@ export const ONBOARDING_PATHS: Record<
   terms: "/onboarding/terms",
   character: "/onboarding/character",
 };
-
-// ── 캐릭터 이름 (S04) ──
-
-export type CharacterNameResult =
-  | { ok: true; name: string }
-  | { ok: false; reason: "empty" | "too-long" | "invalid-char" };
-
-/**
- * 앞뒤 공백을 지우고 가운데 연속 공백을 하나로 줄인 뒤 길이를 센다.
- * 길이는 DB의 char_length와 같은 기준(코드 포인트)으로 센다.
- * 줄바꿈·탭 같은 제어 문자는 받지 않는다.
- */
-export function normalizeCharacterName(
-  raw: string,
-  maxLength: number,
-): CharacterNameResult {
-  const name = raw.trim().replace(/ {2,}/g, " ");
-  if (!name) return { ok: false, reason: "empty" };
-  // eslint-disable-next-line no-control-regex -- 제어 문자를 찾는 것이 목적이다
-  if (/[\u0000-\u001f\u007f]/.test(name)) {
-    return { ok: false, reason: "invalid-char" };
-  }
-  if ([...name].length > maxLength) return { ok: false, reason: "too-long" };
-  return { ok: true, name };
-}

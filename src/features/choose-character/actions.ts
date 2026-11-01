@@ -9,6 +9,7 @@ export type ChooseCharacterState = { error: string } | null;
 const MESSAGES = {
   invalid: "함께할 친구를 한 명 골라 주세요",
   empty: "이름을 지어 주세요",
+  "too-short": "이름을 지어 주세요",
   "too-long": `이름은 ${CHARACTER_NAME_MAX_LENGTH}자까지 지을 수 있어요`,
   "invalid-char": "이름은 한 줄로 지어 주세요",
 } as const;

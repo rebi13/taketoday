@@ -17,3 +17,9 @@ export {
   type CharacterTypeOption,
   type ChooseCharacterResult,
 } from "./onboarding";
+export {
+  getAccount,
+  updateNickname,
+  type Account,
+  type UpdateNicknameResult,
+} from "./account";

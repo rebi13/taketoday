@@ -14,6 +14,8 @@ import {
 } from "drizzle-orm/pg-core";
 import {
   DAILY_PERSONAL_REWARD_CAP,
+  NICKNAME_MAX_LENGTH,
+  NICKNAME_MIN_LENGTH,
   DEFAULT_DAILY_RECOMMEND_COUNT,
   SERVICE_TIME_ZONE,
 } from "@/shared/config/constants";
@@ -42,7 +44,8 @@ export const users = pgTable(
       .defaultNow(),
 
     // ── 서비스 필드 ──
-    nickname: text("nickname"),
+    /** 약관 동의 때 랜덤으로 주고 설정에서 고친다. 겹치지 않는다 */
+    nickname: text("nickname").unique(),
     status: userStatus("status").notNull().default("active"),
     deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
     // 하루는 서비스 전체가 서울 기준이다. 사용자별 시간대는 나중을 위해 자리만 둔다
@@ -70,6 +73,10 @@ export const users = pgTable(
     check(
       "users_daily_recommend_count_range",
       sql`${t.dailyRecommendCount} between 1 and ${sql.raw(String(DAILY_PERSONAL_REWARD_CAP))}`,
+    ),
+    check(
+      "users_nickname_length",
+      sql`char_length(${t.nickname}) between ${sql.raw(String(NICKNAME_MIN_LENGTH))} and ${sql.raw(String(NICKNAME_MAX_LENGTH))}`,
     ),
     check(
       "users_terms_agreed_pair",

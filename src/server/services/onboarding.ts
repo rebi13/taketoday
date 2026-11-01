@@ -1,10 +1,18 @@
 import "server-only";
+import { randomInt } from "node:crypto";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { characters, characterTypes, getDb, users } from "@/server/db";
 import {
+  characters,
+  characterTypes,
+  getDb,
+  isUniqueViolation,
+  users,
+} from "@/server/db";
+import {
+  generateNickname,
   nextOnboardingStep,
-  normalizeCharacterName,
+  normalizeName,
   ONBOARDING_PATHS,
   type OnboardingState,
   type OnboardingStep,
@@ -42,7 +50,10 @@ const termsAgreementSchema = z.object({
 export type AgreeToTermsResult =
   { ok: true; next: string } | { ok: false; reason: "login" | "invalid" };
 
-/** S02 약관 동의. 동의 시각과 약관 버전을 남기고 다음 화면을 알려준다 */
+/**
+ * S02 약관 동의. 동의 시각과 약관 버전을 남기고 다음 화면을 알려준다.
+ * 닉네임이 없으면 이때 랜덤으로 준다(#57). 겹치면 다시 뽑는다
+ */
 export async function agreeToTerms(
   input: unknown,
 ): Promise<AgreeToTermsResult> {
@@ -60,19 +71,38 @@ export async function agreeToTerms(
     nextOnboardingStep({ ...state, ...agreed }, TERMS_VERSION),
   );
 
-  await getDb().update(users).set(agreed).where(eq(users.id, user.id));
+  for (let attempt = 1; ; attempt++) {
+    const nickname = state.nickname ?? generateNickname(randomInt);
+    try {
+      await getDb()
+        .update(users)
+        .set({ ...agreed, nickname })
+        .where(eq(users.id, user.id));
+      break;
+    } catch (error) {
+      const retry =
+        !state.nickname &&
+        attempt < NICKNAME_ATTEMPTS &&
+        isUniqueViolation(error, "users_nickname_unique");
+      if (!retry) throw error;
+    }
+  }
   return { ok: true, next: next ?? "/" };
 }
 
+/** 400만 가지 중 겹칠 확률은 아주 낮다. 그래도 겹치면 몇 번 다시 뽑는다 */
+const NICKNAME_ATTEMPTS = 5;
+
 async function readOnboardingState(
   userId: string,
-): Promise<OnboardingState | null> {
+): Promise<(OnboardingState & { nickname: string | null }) | null> {
   // sql 템플릿 안의 컬럼은 테이블 이름 없이 나가 서브쿼리에서 다른 테이블의 id로 해석된다.
   // 그래서 exists 대신 left join으로 읽는다
   const [row] = await getDb()
     .select({
       termsAgreedAt: users.termsAgreedAt,
       termsVersion: users.termsVersion,
+      nickname: users.nickname,
       characterId: characters.id,
     })
     .from(users)
@@ -82,6 +112,7 @@ async function readOnboardingState(
   return {
     termsAgreedAt: row.termsAgreedAt,
     termsVersion: row.termsVersion,
+    nickname: row.nickname,
     hasCharacter: row.characterId !== null,
   };
 }
@@ -111,7 +142,13 @@ export type ChooseCharacterResult =
   | { ok: true; next: string }
   | {
       ok: false;
-      reason: "login" | "invalid" | "empty" | "too-long" | "invalid-char";
+      reason:
+        | "login"
+        | "invalid"
+        | "empty"
+        | "too-short"
+        | "too-long"
+        | "invalid-char";
     };
 
 /** S04 캐릭터를 고르고 이름을 짓는다. 다시 보내면 고른 것을 바꾼다 */
@@ -122,10 +159,10 @@ export async function chooseCharacter(
   if (!user) return { ok: false, reason: "login" };
   const parsed = chooseCharacterSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
-  const name = normalizeCharacterName(
-    parsed.data.name,
-    CHARACTER_NAME_MAX_LENGTH,
-  );
+  const name = normalizeName(parsed.data.name, {
+    minLength: 1,
+    maxLength: CHARACTER_NAME_MAX_LENGTH,
+  });
   if (!name.ok) return { ok: false, reason: name.reason };
 
   // 읽기 → 고른 뒤의 상태로 다음 단계 계산 → 한 번에 쓰기
