@@ -3,3 +3,5 @@ pnpm-lock.yaml
 next-env.d.ts
 # 문서는 손으로 정리한다. 표 칸 맞춤이 변경 이력을 흐린다.
 *.md
+# drizzle-kit이 만드는 파일
+src/server/db/migrations/

@@ -55,6 +55,11 @@
   --z-furniture: 30;
   --z-floor: 40;
   --z-character: 50;
+
+  /* 구글 로그인 버튼. 구글 브랜드 가이드 값 그대로 쓰고 바꾸지 않는다(Light 테마) */
+  --google-button: #ffffff;
+  --google-button-foreground: #1f1f1f;
+  --google-button-border: #747775;
 }
 
 /* 시험용 어두운 테마 1차안. 기획서의 세트 테마 "밤의 책상"을 앱 색으로 넓힌 예 */
@@ -82,6 +87,11 @@
   --pending: #7f9cc0;
   --postponed: #6f6a62;
   --shadow-card: 0 2px 0 rgb(0 0 0 / 0.25);
+
+  /* 구글 브랜드 가이드의 Dark 테마 */
+  --google-button: #131314;
+  --google-button-foreground: #e3e3e3;
+  --google-button-border: #8e918f;
 }
 
 /* 동작 줄이기 설정이면 모션 시간을 0으로 (2.3 ⑤) */
@@ -97,6 +107,10 @@
     "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
     system-ui, sans-serif;
   --font-heading: var(--font-sans);
+  /* 구글 로그인 버튼 글꼴. --font-google-sans는 next/font가 버튼에 넣는다. 한글은 Pretendard로 */
+  --font-google:
+    var(--font-google-sans), "Pretendard Variable", Pretendard, system-ui,
+    sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -120,6 +134,9 @@
   --color-reward-foreground: var(--reward-foreground);
   --color-pending: var(--pending);
   --color-postponed: var(--postponed);
+  --color-google-button: var(--google-button);
+  --color-google-button-foreground: var(--google-button-foreground);
+  --color-google-button-border: var(--google-button-border);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);

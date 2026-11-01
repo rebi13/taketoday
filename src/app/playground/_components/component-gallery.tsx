@@ -1,5 +1,6 @@
 import { PlusIcon } from "lucide-react";
 
+import { GoogleSignInButton } from "@/features/sign-in";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import {
@@ -176,6 +177,16 @@ export function ComponentGallery() {
               </SheetContent>
             </Sheet>
           ))}
+        </div>
+      </Section>
+
+      <Section title="GoogleSignInButton (features/sign-in)">
+        <p className="text-sm text-muted-foreground">
+          구글 브랜드 가이드 값이라 토큰을 바꿔도 색이 따라가지 않는다. 누르면
+          실제로 로그인한다.
+        </p>
+        <div className="max-w-sm">
+          <GoogleSignInButton />
         </div>
       </Section>
     </div>

@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-01 | Drizzle(Auth.js 테이블)·Auth.js 구글 로그인(DB 세션, 이메일만 저장)·`src/proxy.ts` 로그인 확인. Neon 브랜치 이름 `production`/`develop`. 마이그레이션은 Vercel 빌드에서 적용(ADR 0007) |
 | 2026-10-29 | 외부 서비스 연결 가이드(docs/setup.md), .env.example, Vercel 함수 리전 sin1. 구글 리디렉션 주소 때문에 Vercel 연결을 로그인보다 먼저 한다 |
 | 2026-10-29 | 디자인 토큰 1차안(globals.css), shadcn/ui 기본 컴포넌트 6종(shared/ui), Pretendard, `/playground`. 임의 값 색 린트, 2.3 예시를 Tailwind 4 문법으로 |
 | 2026-10-29 | GitHub Actions CI: PR·main push마다 커밋 메시지, lint, typecheck, 포맷, 테스트, 시드 검증, 빌드 |
@@ -347,8 +348,8 @@ taketoday/
 | (공통) | users에 status(`active` / `deactivated`), deactivated_at. 통계 쿼리는 `active`만 집계. missions에 deleted_at(소프트 삭제), template_version과 user_modified(기본 미션 변경 반영용) |
 | ai_requests | (user_id, local_date) 인덱스 — 하루 20회 카운트 |
 
-- Neon 브랜치: `main`(운영) / `dev`(개발) 두 개로 시작한다. Free 플랜은 브랜치 10개까지라, 프리뷰마다 브랜치를 만드는 방식은 쓰지 않는다.
-- 마이그레이션은 drizzle-kit으로 생성하고 커밋한다. 운영 반영은 배포 파이프라인에서만.
+- Neon 브랜치: `production`(운영) / `develop`(개발) 두 개로 시작한다. Free 플랜은 브랜치 10개까지라, 프리뷰마다 브랜치를 만드는 방식은 쓰지 않는다.
+- 마이그레이션은 drizzle-kit으로 생성하고 커밋한다. 운영 반영은 배포 파이프라인에서만: Vercel 빌드가 `pnpm db:migrate`를 먼저 돌린다(ADR 0007).
 - 탈퇴 30일 경과 계정의 식별정보 파기는 매일 도는 `/api/jobs/daily`에 포함한다(별도 예약 작업을 늘리지 않음).
 - 오프라인 완료는 서비스 워커에서 큐에 쌓았다가 재연결 시 전송한다. 요청에 기기의 완료 시각을 담고, 서버는 그 날짜가 이미 정산됐으면 거부한다.
 
