@@ -17,3 +17,9 @@ export {
   type NameResult,
   type RandomInt,
 } from "./names";
+export {
+  canEditMission,
+  isCycleDays,
+  pickBrowsableTemplates,
+  type EditableMission,
+} from "./missions";

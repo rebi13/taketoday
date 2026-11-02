@@ -1,10 +1,18 @@
 import { PlusIcon } from "lucide-react";
 
 import { CharacterFigure } from "@/entities/character";
+import { MissionCard, ZoneBadge } from "@/entities/mission";
 import { GoogleSignInButton } from "@/features/sign-in";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
+import { Switch } from "@/shared/ui/switch";
 import { Input } from "@/shared/ui/input";
 import {
   Card,
@@ -56,6 +64,13 @@ const BADGE_VARIANTS = [
 ] as const;
 const TABS_VARIANTS = ["default", "line"] as const;
 const SHEET_SIDES = ["bottom", "right", "left", "top"] as const;
+const MISSION_STATUSES = [
+  "none",
+  "pending",
+  "done",
+  "postponed",
+  "canceled",
+] as const;
 
 export function ComponentGallery() {
   return (
@@ -212,6 +227,69 @@ export function ComponentGallery() {
           <Input defaultValue="입력한 값" />
           <Input placeholder="비활성" disabled />
           <Input defaultValue="오류" aria-invalid />
+        </div>
+      </Section>
+
+      <Section title="Switch">
+        <p className="text-sm text-muted-foreground">
+          스위치는 작고, 누르는 영역은 위아래로 넓혀 44px 이상이다.
+        </p>
+        <div className="flex flex-wrap items-center gap-6">
+          <label className="flex min-h-11 items-center gap-3">
+            <Switch /> 꺼짐
+          </label>
+          <label className="flex min-h-11 items-center gap-3">
+            <Switch defaultChecked /> 켜짐
+          </label>
+          <label className="flex min-h-11 items-center gap-3">
+            <Switch disabled /> 비활성
+          </label>
+        </div>
+      </Section>
+
+      <Section title="DropdownMenu">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">메뉴 열기</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-auto">
+            <DropdownMenuItem>기본 항목</DropdownMenuItem>
+            <DropdownMenuItem variant="destructive">지우기</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </Section>
+
+      <Section title="ZoneBadge (entities/mission)">
+        <div className="flex flex-wrap gap-2">
+          <ZoneBadge zone={{ name: "책상·작업공간", icon: "monitor" }} />
+          <ZoneBadge zone={{ name: "욕실", icon: "bath" }} />
+          <ZoneBadge zone={null} />
+        </div>
+      </Section>
+
+      <Section title="MissionCard (entities/mission)">
+        <div className="grid gap-2 mid:grid-cols-2">
+          {MISSION_STATUSES.map((status) => (
+            <MissionCard
+              key={status}
+              status={status}
+              name={`책상 위 컵 치우기 · ${status}`}
+              meta="매일"
+            />
+          ))}
+          <MissionCard
+            size="compact"
+            name="compact"
+            meta="3일마다"
+            actions={<Switch defaultChecked aria-label="켜기" />}
+          />
+          <MissionCard
+            size="compact"
+            active={false}
+            name="compact · active=false"
+            meta="꺼 둠"
+            actions={<Switch aria-label="켜기" />}
+          />
         </div>
       </Section>
 
