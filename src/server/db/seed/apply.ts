@@ -1,7 +1,7 @@
 import "server-only";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { and, eq, isNull, lt, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
 import type { PgColumn, PgTransaction } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import {
@@ -10,7 +10,7 @@ import {
   zoneSchema,
 } from "../../../../seed/schema";
 import { characterTypes, missionTemplates, missions, zones } from "../schema";
-import { planTemplates, type TemplatePlan } from "./plan";
+import { pickMissionsToSync, planTemplates, type TemplatePlan } from "./plan";
 
 // seed/의 구역·기본 미션·캐릭터 종류를 DB에 맞춘다. 여러 번 돌려도 결과가 같다.
 // 아이템 시드는 M4(#27)에서 붙인다.
@@ -117,6 +117,17 @@ export async function applySeed(tx: Tx, seed: Seed): Promise<SeedResult> {
   let missionsUpdated = 0;
   for (const id of plan.textChanged) {
     const row = plan.rows.find((r) => r.id === id)!;
+    const candidates = await tx
+      .select({
+        id: missions.id,
+        userModified: missions.userModified,
+        deletedAt: missions.deletedAt,
+        templateVersion: missions.templateVersion,
+      })
+      .from(missions)
+      .where(eq(missions.templateId, id));
+    const ids = pickMissionsToSync(candidates, row.version);
+    if (ids.length === 0) continue;
     const updated = await tx
       .update(missions)
       .set({
@@ -126,10 +137,9 @@ export async function applySeed(tx: Tx, seed: Seed): Promise<SeedResult> {
       })
       .where(
         and(
-          eq(missions.templateId, id),
+          inArray(missions.id, ids),
+          // 읽은 뒤 사용자가 기준을 고쳤으면 덮어쓰지 않는다
           eq(missions.userModified, false),
-          isNull(missions.deletedAt),
-          lt(missions.templateVersion, row.version),
         ),
       )
       .returning({ id: missions.id });

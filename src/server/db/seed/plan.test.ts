@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MissionTemplate } from "../../../../seed/schema";
-import { planTemplates } from "./plan";
+import { pickMissionsToSync, planTemplates, type SyncCandidate } from "./plan";
 
 const template = (
   id: string,
@@ -79,5 +79,40 @@ describe("planTemplates", () => {
     );
     expect(plan.orphaned).toEqual(["desk-99"]);
     expect(plan.rows.map((r) => r.id)).toEqual(["desk-01"]);
+  });
+});
+
+describe("pickMissionsToSync", () => {
+  const mission = (id: string, overrides: Partial<SyncCandidate> = {}) => ({
+    id,
+    userModified: false,
+    deletedAt: null,
+    templateVersion: 1,
+    ...overrides,
+  });
+
+  it("고치지 않은 미션은 새 문장으로 바꾼다", () => {
+    expect(pickMissionsToSync([mission("a")], 2)).toEqual(["a"]);
+  });
+
+  it("사용자가 고친 완료 기준은 시드 갱신에 덮어쓰지 않는다", () => {
+    expect(
+      pickMissionsToSync(
+        [mission("a", { userModified: true }), mission("b")],
+        2,
+      ),
+    ).toEqual(["b"]);
+  });
+
+  it("지운 미션과 이미 반영한 미션은 건너뛴다", () => {
+    expect(
+      pickMissionsToSync(
+        [
+          mission("a", { deletedAt: new Date() }),
+          mission("b", { templateVersion: 2 }),
+        ],
+        2,
+      ),
+    ).toEqual([]);
   });
 });
