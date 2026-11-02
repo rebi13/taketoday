@@ -33,7 +33,7 @@ export {
   changeMissionCycle,
   deleteMission,
   getMissionBoard,
-  setMissionActive,
+  setMissionsActive,
   turnOnTemplate,
   type BrowsableTemplate,
   type MissionBoard,

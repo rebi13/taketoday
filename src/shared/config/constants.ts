@@ -60,3 +60,6 @@ export const EVENING_NOTIFY_CUTOFF = "20:00";
 /** 주기형 미션의 주기 범위(일). 기본 미션의 가장 긴 주기가 1년이다 */
 export const MISSION_CYCLE_MIN_DAYS = 1;
 export const MISSION_CYCLE_MAX_DAYS = 365;
+
+/** 미션 켜기·끄기를 한 번에 바꿀 수 있는 개수. 구역 하나의 미션이 이보다 많을 일은 없다 */
+export const MISSION_BATCH_MAX = 200;

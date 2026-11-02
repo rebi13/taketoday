@@ -8,7 +8,11 @@ import {
   MissionCard,
   ZoneBadge,
 } from "@/entities/mission";
-import { MissionActiveSwitch } from "@/features/toggle-mission";
+import {
+  MissionActiveSwitch,
+  useMissionToggle,
+  ZoneToggleButton,
+} from "@/features/toggle-mission";
 import { TurnOnTemplateButton } from "@/features/turn-on-template";
 import { Button } from "@/shared/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
@@ -35,9 +39,11 @@ export function MissionBoard({
     window.history.replaceState(null, "", url);
   };
 
-  const mine = groupByZone(board.zones, board.mine);
+  // 낱개 스위치와 구역의 모두 켜기·끄기가 같은 상태를 본다
+  const { missions: myMissions, toggle } = useMissionToggle(board.mine);
+  const mine = groupByZone(board.zones, myMissions);
   const browse = groupByZone(board.zones, board.browse);
-  const activeCount = board.mine.filter((m) => m.active).length;
+  const activeCount = myMissions.filter((m) => m.active).length;
 
   return (
     <Tabs value={tab} onValueChange={changeTab} className="gap-4">
@@ -52,6 +58,20 @@ export function MissionBoard({
         )}
         <ZoneGroups
           groups={mine}
+          headerAction={(group) => (
+            <ZoneToggleButton
+              zoneName={group.zone?.name ?? "구역 없음"}
+              allActive={group.items.every((m) => m.active)}
+              onToggle={(active) =>
+                toggle(
+                  group.items
+                    .filter((m) => m.active !== active)
+                    .map((m) => m.id),
+                  active,
+                )
+              }
+            />
+          )}
           render={(mission) => (
             <MissionCard
               size="compact"
@@ -61,9 +81,9 @@ export function MissionBoard({
               actions={
                 <>
                   <MissionActiveSwitch
-                    missionId={mission.id}
                     name={mission.name}
                     active={mission.active}
+                    onToggle={(active) => toggle([mission.id], active)}
                   />
                   <MissionMenu mission={mission} />
                 </>
@@ -111,9 +131,12 @@ export function MissionBoard({
 function ZoneGroups<T extends { id: string; zoneId: string | null }>({
   groups,
   render,
+  headerAction,
 }: {
   groups: ZoneGroup<T>[];
   render: (item: T) => React.ReactNode;
+  /** 구역 이름표 오른쪽(내 미션 탭의 모두 켜기·끄기) */
+  headerAction?: (group: ZoneGroup<T>) => React.ReactNode;
 }) {
   return groups.map((group) => (
     <section
@@ -121,9 +144,12 @@ function ZoneGroups<T extends { id: string; zoneId: string | null }>({
       aria-label={group.zone?.name ?? "구역 없음"}
       className="flex flex-col gap-2"
     >
-      <h2>
-        <ZoneBadge zone={group.zone} />
-      </h2>
+      <div className="flex min-h-11 items-center justify-between gap-2">
+        <h2>
+          <ZoneBadge zone={group.zone} />
+        </h2>
+        {headerAction?.(group)}
+      </div>
       <ul className="grid gap-2 mid:grid-cols-2">
         {group.items.map((item) => (
           <li key={item.id}>{render(item)}</li>

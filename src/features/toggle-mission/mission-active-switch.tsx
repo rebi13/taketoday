@@ -1,32 +1,22 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
 import { Switch } from "@/shared/ui/switch";
-import { setMissionActiveAction } from "./actions";
 
-// S11 켜기·끄기. 누르면 바로 바뀌어 보이고, 저장이 끝나면 서버 값으로 맞춘다
+// S11 미션 하나 켜기·끄기. 상태는 useMissionToggle이 쥔다
 export function MissionActiveSwitch({
-  missionId,
   name,
   active,
+  onToggle,
 }: {
-  missionId: string;
   name: string;
   active: boolean;
+  onToggle: (active: boolean) => void;
 }) {
-  const [optimistic, setOptimistic] = useOptimistic(active);
-  const [, startTransition] = useTransition();
-
   return (
     <Switch
-      checked={optimistic}
+      checked={active}
       aria-label={`${name} 켜기`}
-      onCheckedChange={(checked) =>
-        startTransition(async () => {
-          setOptimistic(checked);
-          await setMissionActiveAction(missionId, checked);
-        })
-      }
+      onCheckedChange={onToggle}
     />
   );
 }

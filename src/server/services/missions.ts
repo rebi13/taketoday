@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   getDb,
@@ -13,6 +13,7 @@ import {
   isCycleDays,
   pickBrowsableTemplates,
 } from "@/server/domain";
+import { MISSION_BATCH_MAX } from "@/shared/config/constants";
 import { ensurePersonalList } from "./lists";
 import { getSessionUser } from "./session";
 
@@ -118,18 +119,55 @@ export type MissionChangeResult =
   { ok: true } | { ok: false; reason: "login" | "invalid" | "not-found" };
 
 const setActiveSchema = z.object({
-  missionId: z.uuid(),
+  missionIds: z.array(z.uuid()).min(1).max(MISSION_BATCH_MAX),
   active: z.boolean(),
 });
 
-/** S11 켜기·끄기. 꺼 둔 미션은 추천에서 빠지고 목록에는 남는다 */
-export async function setMissionActive(
+/**
+ * S11 켜기·끄기. 미션 하나(스위치)나 구역 하나(모두 켜기·끄기)를 한 번에 바꾼다.
+ * 꺼 둔 미션은 추천에서 빠지고 목록에는 남는다.
+ * 한 트랜잭션: 미션과 리스트 주인 읽기 → 모두 권한 확인 → 한 번에 쓰기.
+ * 하나라도 고칠 수 없으면(지웠거나 남의 것) 아무것도 바꾸지 않는다
+ */
+export async function setMissionsActive(
   input: unknown,
 ): Promise<MissionChangeResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, reason: "login" };
   const parsed = setActiveSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
-  const { missionId, active } = parsed.data;
-  return changeMission(missionId, () => ({ active }));
+  const missionIds = [...new Set(parsed.data.missionIds)];
+  const { active } = parsed.data;
+
+  return getDb().transaction(async (tx) => {
+    const rows = await tx
+      .select({
+        deletedAt: missions.deletedAt,
+        ownerType: missionLists.ownerType,
+        ownerId: missionLists.ownerId,
+      })
+      .from(missions)
+      .innerJoin(missionLists, eq(missionLists.id, missions.listId))
+      .where(inArray(missions.id, missionIds));
+    const editable =
+      rows.length === missionIds.length &&
+      rows.every((row) =>
+        canEditMission(
+          {
+            deletedAt: row.deletedAt,
+            list: { ownerType: row.ownerType, ownerId: row.ownerId },
+          },
+          { userId: user.id },
+        ),
+      );
+    if (!editable) return { ok: false, reason: "not-found" } as const;
+
+    await tx
+      .update(missions)
+      .set({ active })
+      .where(inArray(missions.id, missionIds));
+    return { ok: true } as const;
+  });
 }
 
 const changeCycleSchema = z.object({
@@ -165,7 +203,7 @@ export async function deleteMission(
 }
 
 type MissionPatch = Partial<
-  Pick<typeof missions.$inferInsert, "active" | "cycleDays" | "deletedAt">
+  Pick<typeof missions.$inferInsert, "cycleDays" | "deletedAt">
 >;
 
 /**
