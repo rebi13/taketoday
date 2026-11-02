@@ -1,13 +1,12 @@
 import "server-only";
 import { randomInt } from "node:crypto";
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
   characters,
   characterTypes,
   getDb,
   isUniqueViolation,
-  missionLists,
   missions,
   missionTemplates,
   userRestDays,
@@ -31,6 +30,7 @@ import {
   HOUSEHOLDS,
   TERMS_VERSION,
 } from "@/shared/config/constants";
+import { ensurePersonalList } from "./lists";
 import { getSessionUser, type SessionUser } from "./session";
 
 export type AppEntry =
@@ -320,20 +320,7 @@ export async function finishOnboarding(
       .from(missionTemplates);
     const picked = pickStartingTemplates(templates, me.conditionTags);
 
-    // 개인 리스트는 사용자당 하나. 이미 있으면 그것을 쓴다
-    await tx
-      .insert(missionLists)
-      .values({ ownerType: "user", ownerId: user.id })
-      .onConflictDoNothing();
-    const [list] = await tx
-      .select({ id: missionLists.id })
-      .from(missionLists)
-      .where(
-        and(
-          eq(missionLists.ownerType, "user"),
-          eq(missionLists.ownerId, user.id),
-        ),
-      );
+    const list = await ensurePersonalList(tx, user.id);
 
     if (picked.length > 0) {
       await tx

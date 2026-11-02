@@ -56,3 +56,7 @@ export type Household = (typeof HOUSEHOLDS)[number];
 
 /** 기본 알림이 이 시각(서울, HH:mm) 이후면 저녁 알림과 너무 가까워 저녁 알림을 보내지 않는다(기획서 6.9) */
 export const EVENING_NOTIFY_CUTOFF = "20:00";
+
+/** 주기형 미션의 주기 범위(일). 기본 미션의 가장 긴 주기가 1년이다 */
+export const MISSION_CYCLE_MIN_DAYS = 1;
+export const MISSION_CYCLE_MAX_DAYS = 365;
