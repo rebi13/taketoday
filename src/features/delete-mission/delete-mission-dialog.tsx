@@ -21,6 +21,8 @@ type Props = {
   fromTemplate: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** 지운 뒤 목록(S11)으로 간다. 상세(S12)에서 지울 때 */
+  backToList?: boolean;
 };
 
 export function DeleteMissionDialog({
@@ -29,6 +31,7 @@ export function DeleteMissionDialog({
   fromTemplate,
   open,
   onOpenChange,
+  backToList = false,
 }: Props) {
   const [pending, startTransition] = useTransition();
   const [failed, setFailed] = useState(false);
@@ -68,7 +71,7 @@ export function DeleteMissionDialog({
             disabled={pending}
             onClick={() =>
               startTransition(async () => {
-                const ok = await deleteMissionAction(missionId);
+                const ok = await deleteMissionAction(missionId, backToList);
                 if (ok) onOpenChange(false);
                 else setFailed(true);
               })

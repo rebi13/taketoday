@@ -1,7 +1,12 @@
 import { PlusIcon } from "lucide-react";
 
 import { CharacterFigure } from "@/entities/character";
-import { MissionCard, ZoneBadge } from "@/entities/mission";
+import {
+  CheckCriteriaBox,
+  CheckCriteriaDialog,
+  MissionCard,
+  ZoneBadge,
+} from "@/entities/mission";
 import { GoogleSignInButton } from "@/features/sign-in";
 import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
@@ -13,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
 import { Switch } from "@/shared/ui/switch";
+import { Textarea } from "@/shared/ui/textarea";
 import { Input } from "@/shared/ui/input";
 import {
   Card,
@@ -279,7 +285,8 @@ export function ComponentGallery() {
           ))}
           <MissionCard
             size="compact"
-            name="compact"
+            name="compact · href(카드 전체가 링크)"
+            href="/playground"
             meta="3일마다"
             actions={<Switch defaultChecked aria-label="켜기" />}
           />
@@ -291,6 +298,29 @@ export function ComponentGallery() {
             actions={<Switch aria-label="켜기" />}
           />
         </div>
+      </Section>
+
+      <Section title="Textarea">
+        <Textarea placeholder="여러 줄 입력" rows={3} />
+      </Section>
+
+      <Section title="CheckCriteriaBox · CheckCriteriaDialog (entities/mission)">
+        <div className="grid gap-2 mid:grid-cols-2">
+          <CheckCriteriaBox
+            checkCriteria="수세미로 세면대 테두리와 수도꼭지 주변을 한 바퀴 닦으면 완료"
+            action={<Button variant="outline">내 기준으로 바꾸기</Button>}
+          />
+          <CheckCriteriaBox
+            checkCriteria="물티슈로 수도꼭지만 닦으면 완료"
+            userModified
+          />
+        </div>
+        <CheckCriteriaDialog
+          name="세면대 닦기"
+          checkCriteria="수세미로 세면대 테두리와 수도꼭지 주변을 한 바퀴 닦으면 완료"
+        >
+          <Button variant="outline">P01 완료 기준 보기</Button>
+        </CheckCriteriaDialog>
       </Section>
 
       <Section title="CharacterFigure (entities/character, 임시 도형)">

@@ -1,29 +1,8 @@
-import { redirect } from "next/navigation";
-import { Suspense } from "react";
-import { getMissionBoard } from "@/server/services";
-import { MissionBoard } from "@/widgets/mission-board";
-
-// S11 내 미션 목록 + S15 기본 미션 둘러보기(탭). 상세(S12)는 #16, 직접 만들기(S13)는 #17
-export default function MissionsPage({ searchParams }: PageProps<"/missions">) {
+// 넓은 화면(840 이상)에서 아직 미션을 고르지 않았을 때 오른쪽 영역. 좁은 화면에서는 숨는다
+export default function MissionsPage() {
   return (
-    <main className="flex flex-1 flex-col gap-4 px-4 pt-4 pb-6">
-      <h1 className="text-xl font-semibold">미션</h1>
-      <Suspense>
-        <Board searchParams={searchParams} />
-      </Suspense>
-    </main>
-  );
-}
-
-async function Board({
-  searchParams,
-}: Pick<PageProps<"/missions">, "searchParams">) {
-  const [board, { tab }] = await Promise.all([getMissionBoard(), searchParams]);
-  if (!board) redirect("/login");
-  return (
-    <MissionBoard
-      board={board}
-      initialTab={tab === "browse" ? "browse" : "mine"}
-    />
+    <p className="rounded-xl bg-muted px-4 py-10 text-center text-muted-foreground">
+      미션을 누르면 여기에서 완료 기준과 주기를 볼 수 있어요.
+    </p>
   );
 }

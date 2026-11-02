@@ -4,6 +4,7 @@ import { cva } from "class-variance-authority";
 import { CalendarDays, House, ListChecks, Sofa } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 
 // 탭 4개(screen-flow 세부 선택 ④). 설정은 홈 상단에서 들어간다.
 // 같은 메뉴를 폭에 따라 CSS로만 바꾼다: 840 미만은 하단 탭바, 이상은 왼쪽 세로 메뉴.
@@ -26,15 +27,30 @@ const tabItemVariants = cva(
   },
 );
 
-function isActive(pathname: string, href: string) {
+function isActive(pathname: string | null, href: string) {
+  if (pathname === null) return false;
   return href === "/"
     ? pathname === "/"
     : pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/**
+ * 주소는 요청마다 다르다(/missions/[id] 같은 동적 주소). 미리 그린 화면에는 고른 탭 없이
+ * 메뉴만 두고, 주소를 읽으면 고른 탭을 표시한다(Cache Components)
+ */
 export function TabNav() {
-  const pathname = usePathname();
+  return (
+    <Suspense fallback={<TabNavView pathname={null} />}>
+      <CurrentTabNav />
+    </Suspense>
+  );
+}
 
+function CurrentTabNav() {
+  return <TabNavView pathname={usePathname()} />;
+}
+
+function TabNavView({ pathname }: { pathname: string | null }) {
   return (
     <nav
       aria-label="주요 메뉴"

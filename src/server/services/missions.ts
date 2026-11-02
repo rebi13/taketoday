@@ -11,9 +11,16 @@ import {
 import {
   canEditMission,
   isCycleDays,
+  normalizeCheckCriteria,
   pickBrowsableTemplates,
+  planCriteriaChange,
+  type CriteriaPatch,
+  type CriteriaTemplate,
 } from "@/server/domain";
-import { MISSION_BATCH_MAX } from "@/shared/config/constants";
+import {
+  CHECK_CRITERIA_MAX_LENGTH,
+  MISSION_BATCH_MAX,
+} from "@/shared/config/constants";
 import { ensurePersonalList } from "./lists";
 import { getSessionUser } from "./session";
 
@@ -184,8 +191,10 @@ export async function changeMissionCycle(
     return { ok: false, reason: "invalid" };
   }
   const { missionId, cycleDays } = parsed.data;
-  return changeMission(missionId, (mission) =>
-    mission.kind === "recurring" ? { cycleDays } : null,
+  return withoutPatch(
+    await changeMission(missionId, (mission) =>
+      mission.kind === "recurring" ? { cycleDays } : null,
+    ),
   );
 }
 
@@ -197,24 +206,43 @@ export async function deleteMission(
 ): Promise<MissionChangeResult> {
   const parsed = deleteSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
-  return changeMission(parsed.data.missionId, () => ({
-    deletedAt: new Date(),
-  }));
+  return withoutPatch(
+    await changeMission(parsed.data.missionId, () => ({
+      deletedAt: new Date(),
+    })),
+  );
 }
 
 type MissionPatch = Partial<
-  Pick<typeof missions.$inferInsert, "cycleDays" | "deletedAt">
+  Pick<
+    typeof missions.$inferInsert,
+    | "cycleDays"
+    | "deletedAt"
+    | "checkCriteria"
+    | "userModified"
+    | "name"
+    | "templateVersion"
+  >
 >;
+
+type MissionForPatch = {
+  kind: "recurring" | "once";
+  /** 기본 미션에서 켰으면 그 템플릿의 지금 문장 */
+  template: CriteriaTemplate | null;
+};
 
 /**
  * 미션 하나를 고치는 공통 흐름. 한 트랜잭션: 미션과 리스트 주인 읽기 →
  * 권한 확인(canEditMission) → 바꿀 값 계산 → 쓰기.
  * patch가 null을 돌려주면 이 미션에는 맞지 않는 변경이다(invalid)
  */
-async function changeMission(
+async function changeMission<P extends MissionPatch>(
   missionId: string,
-  patch: (mission: { kind: "recurring" | "once" }) => MissionPatch | null,
-): Promise<MissionChangeResult> {
+  patch: (mission: MissionForPatch) => P | null,
+): Promise<
+  | { ok: true; patch: P }
+  | { ok: false; reason: "login" | "invalid" | "not-found" }
+> {
   const user = await getSessionUser();
   if (!user) return { ok: false, reason: "login" };
 
@@ -225,9 +253,13 @@ async function changeMission(
         deletedAt: missions.deletedAt,
         ownerType: missionLists.ownerType,
         ownerId: missionLists.ownerId,
+        templateName: missionTemplates.name,
+        templateCriteria: missionTemplates.checkCriteria,
+        templateVersion: missionTemplates.version,
       })
       .from(missions)
       .innerJoin(missionLists, eq(missionLists.id, missions.listId))
+      .leftJoin(missionTemplates, eq(missionTemplates.id, missions.templateId))
       .where(eq(missions.id, missionId));
     // 남의 미션은 있는지도 알리지 않는다
     if (
@@ -243,11 +275,173 @@ async function changeMission(
       return { ok: false, reason: "not-found" } as const;
     }
 
-    const values = patch({ kind: row.kind });
+    const values = patch({
+      kind: row.kind,
+      template:
+        row.templateName !== null &&
+        row.templateCriteria !== null &&
+        row.templateVersion !== null
+          ? {
+              name: row.templateName,
+              checkCriteria: row.templateCriteria,
+              version: row.templateVersion,
+            }
+          : null,
+    });
     if (!values) return { ok: false, reason: "invalid" } as const;
     await tx.update(missions).set(values).where(eq(missions.id, missionId));
-    return { ok: true } as const;
+    return { ok: true, patch: values } as const;
   });
+}
+
+/** 화면에는 쓴 값을 돌려주지 않는다 */
+function withoutPatch(
+  result: Awaited<ReturnType<typeof changeMission>>,
+): MissionChangeResult {
+  return result.ok ? { ok: true } : result;
+}
+
+// ── S12 미션 상세와 완료 기준 바꾸기(#16) ──
+
+export type MissionDetail = {
+  id: string;
+  name: string;
+  zone: MissionZone | null;
+  kind: "recurring" | "once";
+  cycleDays: number | null;
+  dueDate: string | null;
+  checkCriteria: string;
+  /** 사용자가 완료 기준을 고쳤다 */
+  userModified: boolean;
+  active: boolean;
+  /** 기본 미션의 지금 기준. 직접 만든 미션이면 null. "기본 기준으로 되돌리기"에 쓴다 */
+  templateCriteria: string | null;
+  /** 마지막으로 완료한 날(localDate). 완료 기록(M2, #19)이 생기기 전까지 null */
+  lastDoneDate: string | null;
+};
+
+const detailSchema = z.object({ missionId: z.uuid() });
+
+/** S12 미션 상세. 로그인이 안 됐거나, 없거나, 남의 것이거나, 지운 미션이면 null */
+export async function getMissionDetail(
+  input: unknown,
+): Promise<MissionDetail | null> {
+  const user = await getSessionUser();
+  if (!user) return null;
+  const parsed = detailSchema.safeParse(input);
+  if (!parsed.success) return null;
+
+  const [row] = await getDb()
+    .select({
+      id: missions.id,
+      name: missions.name,
+      kind: missions.kind,
+      cycleDays: missions.cycleDays,
+      dueDate: missions.dueDate,
+      checkCriteria: missions.checkCriteria,
+      userModified: missions.userModified,
+      active: missions.active,
+      deletedAt: missions.deletedAt,
+      ownerType: missionLists.ownerType,
+      ownerId: missionLists.ownerId,
+      zoneId: zones.id,
+      zoneName: zones.name,
+      zoneIcon: zones.icon,
+      templateCriteria: missionTemplates.checkCriteria,
+    })
+    .from(missions)
+    .innerJoin(missionLists, eq(missionLists.id, missions.listId))
+    .leftJoin(zones, eq(zones.id, missions.zoneId))
+    .leftJoin(missionTemplates, eq(missionTemplates.id, missions.templateId))
+    .where(eq(missions.id, parsed.data.missionId));
+  if (
+    !row ||
+    !canEditMission(
+      {
+        deletedAt: row.deletedAt,
+        list: { ownerType: row.ownerType, ownerId: row.ownerId },
+      },
+      { userId: user.id },
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    name: row.name,
+    zone:
+      row.zoneId !== null && row.zoneName !== null && row.zoneIcon !== null
+        ? { id: row.zoneId, name: row.zoneName, icon: row.zoneIcon }
+        : null,
+    kind: row.kind,
+    cycleDays: row.cycleDays,
+    dueDate: row.dueDate,
+    checkCriteria: row.checkCriteria,
+    userModified: row.userModified,
+    active: row.active,
+    templateCriteria: row.templateCriteria,
+    lastDoneDate: null,
+  };
+}
+
+export type CriteriaChangeResult =
+  | { ok: true; checkCriteria: string; userModified: boolean }
+  | {
+      ok: false;
+      reason: "login" | "invalid" | "not-found" | "empty" | "too-long";
+    };
+
+const updateCriteriaSchema = z.object({
+  missionId: z.uuid(),
+  checkCriteria: z.string(),
+});
+
+/**
+ * P25 내 기준으로 바꾸기. 고친 기준은 user_modified로 표시해 기본 미션 문장이
+ * 바뀌어도 덮어쓰지 않는다. 기본 기준과 같은 문장이면 되돌리기와 같다
+ */
+export async function updateCheckCriteria(
+  input: unknown,
+): Promise<CriteriaChangeResult> {
+  const parsed = updateCriteriaSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const criteria = normalizeCheckCriteria(
+    parsed.data.checkCriteria,
+    CHECK_CRITERIA_MAX_LENGTH,
+  );
+  if (!criteria.ok) return { ok: false, reason: criteria.reason };
+  return changeCriteria(parsed.data.missionId, (template) =>
+    planCriteriaChange(criteria.text, template),
+  );
+}
+
+const resetCriteriaSchema = z.object({ missionId: z.uuid() });
+
+/** P25 기본 기준으로 되돌리기. 기본 미션에서 켠 미션만 */
+export async function resetCheckCriteria(
+  input: unknown,
+): Promise<CriteriaChangeResult> {
+  const parsed = resetCriteriaSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  return changeCriteria(parsed.data.missionId, (template) =>
+    template ? planCriteriaChange(template.checkCriteria, template) : null,
+  );
+}
+
+async function changeCriteria(
+  missionId: string,
+  plan: (template: CriteriaTemplate | null) => CriteriaPatch | null,
+): Promise<CriteriaChangeResult> {
+  const result = await changeMission(missionId, ({ template }) =>
+    plan(template),
+  );
+  if (!result.ok) return result;
+  return {
+    ok: true,
+    checkCriteria: result.patch.checkCriteria,
+    userModified: result.patch.userModified,
+  };
 }
 
 const turnOnTemplateSchema = z.object({ templateId: z.string().min(1) });
