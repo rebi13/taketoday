@@ -1,7 +1,6 @@
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { TermsAgreementForm } from "@/features/agree-terms";
-import { getAppEntry } from "@/server/services";
+import { requireOnboardingStep } from "../_lib/require-step";
 
 // S02 약관 동의 · 만 14세 이상 확인
 export default function TermsStepPage() {
@@ -23,9 +22,6 @@ export default function TermsStepPage() {
 
 /** 이미 동의했거나 로그인하지 않았으면 맞는 곳으로 보낸다 */
 async function OnlyOnThisStep() {
-  const entry = await getAppEntry();
-  if (entry.kind === "login") redirect("/login");
-  if (entry.kind === "ready") redirect("/");
-  if (entry.path !== "/onboarding/terms") redirect(entry.path);
+  await requireOnboardingStep("/onboarding/terms");
   return null;
 }

@@ -76,6 +76,7 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 | AI 미션 만들기 하루 사용 | 20회 |
 | 기본 하루 추천 개수 | 2 |
 | 저녁 알림 | 21:00 KST |
+| 기본 알림 시각 기본값 | 08:00 KST |
 
 ## 공유 리스트 확장 대비 (MVP에는 없지만 지킬 것)
 

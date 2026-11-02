@@ -14,6 +14,7 @@ import {
 } from "drizzle-orm/pg-core";
 import {
   DAILY_PERSONAL_REWARD_CAP,
+  HOUSEHOLDS,
   NICKNAME_MAX_LENGTH,
   NICKNAME_MIN_LENGTH,
   DEFAULT_DAILY_RECOMMEND_COUNT,
@@ -29,7 +30,7 @@ import type { ConditionTag } from "./missions";
 export const userStatus = pgEnum("user_status", ["active", "deactivated"]);
 
 /** 온보딩의 거주 형태(기획서 8.6) */
-export const household = pgEnum("household", ["solo", "shared"]);
+export const household = pgEnum("household", HOUSEHOLDS);
 
 export const users = pgTable(
   "users",

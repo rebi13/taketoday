@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ChooseCharacterForm } from "@/features/choose-character";
-import { getAppEntry, listCharacterTypes } from "@/server/services";
+import { listCharacterTypes } from "@/server/services";
+import { requireOnboardingStep } from "../_lib/require-step";
 
 // S04 캐릭터 고르기·이름 짓기. S03 환영 소개는 빼고 여기에 한 줄 소개를 둔다(screen-flow ①).
 export default function CharacterStepPage() {
@@ -22,9 +22,6 @@ export default function CharacterStepPage() {
 }
 
 async function CharacterStep() {
-  const entry = await getAppEntry();
-  if (entry.kind === "login") redirect("/login");
-  if (entry.kind === "ready") redirect("/");
-  if (entry.path !== "/onboarding/character") redirect(entry.path);
+  await requireOnboardingStep("/onboarding/character");
   return <ChooseCharacterForm types={await listCharacterTypes()} />;
 }

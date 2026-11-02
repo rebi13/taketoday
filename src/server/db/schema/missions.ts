@@ -23,7 +23,8 @@ import { users } from "./auth";
 // 구역·기본 미션(시드 전용)과 사용자의 미션 리스트·미션 (기획서 8장·11장, 구현 계획 4장).
 // 값의 종류는 seed/schema.ts와 같게 맞춘다.
 
-export type ConditionTag = "pet" | "plant" | "car" | "aircon" | "humidifier";
+export type { ConditionTag } from "@/shared/config/constants";
+import type { ConditionTag } from "@/shared/config/constants";
 export type Season = "spring" | "summer" | "autumn" | "winter";
 
 export const difficulty = pgEnum("difficulty", ["low", "mid", "high"]);
