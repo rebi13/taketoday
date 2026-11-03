@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { CheckCriteriaField } from "@/entities/mission";
+import { CheckCriteriaField, MissionCard } from "@/entities/mission";
+import {
+  DailyCapDialog,
+  FirstCompletionDialog,
+} from "@/features/complete-mission";
 import { Button } from "@/shared/ui/button";
 import {
   Select,
@@ -49,6 +53,48 @@ export function CheckCriteriaFieldSample() {
       name="checkCriteria"
       value={value}
       onChange={setValue}
+    />
+  );
+}
+
+export function RewardDialogsSample() {
+  const [open, setOpen] = useState<"first" | "cap" | null>(null);
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button type="button" variant="outline" onClick={() => setOpen("first")}>
+        P08 첫 완료
+      </Button>
+      <Button type="button" variant="outline" onClick={() => setOpen("cap")}>
+        P03 보상 다 모음
+      </Button>
+      <FirstCompletionDialog
+        open={open === "first"}
+        onOpenChange={(next) => !next && setOpen(null)}
+      />
+      <DailyCapDialog
+        open={open === "cap"}
+        onOpenChange={(next) => !next && setOpen(null)}
+      />
+    </div>
+  );
+}
+
+export function SelectableMissionCardSample() {
+  const [count, setCount] = useState(0);
+  return (
+    <MissionCard
+      status="pending"
+      name={`onSelect · 카드를 누르면 ${count}번`}
+      meta="매일"
+      onSelect={() => setCount((n) => n + 1)}
+      actions={
+        <div className="flex gap-1">
+          <Button type="button" variant="ghost">
+            내일로
+          </Button>
+          <Button type="button">완료</Button>
+        </div>
+      }
     />
   );
 }

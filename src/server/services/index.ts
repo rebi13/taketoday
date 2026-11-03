@@ -58,3 +58,9 @@ export {
   type TodayMission,
   type TodayRecommendations,
 } from "./recommendations";
+export {
+  completeMission,
+  postponeMission,
+  type CompleteMissionResult,
+  type PostponeMissionResult,
+} from "./completions";

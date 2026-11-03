@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, eq, isNotNull, isNull, max } from "drizzle-orm";
 import {
+  completions,
   dailyMissions,
   getDb,
   missionLists,
@@ -11,7 +12,9 @@ import {
   zones,
 } from "@/server/db";
 import {
+  countPendingRewards,
   pickRecommendations,
+  type CompletionRecord,
   type MissionHistoryEntry,
   type RecommendableMission,
 } from "@/server/domain";
@@ -36,6 +39,8 @@ export type TodayMission = {
   checkCriteria: string;
   /** 사용자가 완료 기준을 고쳤다 */
   userModified: boolean;
+  /** 기본 미션의 지금 기준. 직접 만든 미션이면 null(P25 되돌리기) */
+  templateCriteria: string | null;
   status: DailyMissionStatus;
 };
 
@@ -44,6 +49,8 @@ export type TodayRecommendations = {
   date: LocalDate;
   /** 추천 순서대로. 그사이 지운 미션은 빠진다 */
   missions: TodayMission[];
+  /** 오늘 적립 예정 수(상한까지). 추천 밖에서 한 완료도 센다 */
+  pendingRewards: number;
 };
 
 /**
@@ -74,6 +81,7 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
         dueDate: missions.dueDate,
         checkCriteria: missions.checkCriteria,
         userModified: missions.userModified,
+        templateCriteria: missionTemplates.checkCriteria,
         status: dailyMissions.status,
         zoneId: zones.id,
         zoneName: zones.name,
@@ -82,6 +90,7 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
       .from(dailyMissions)
       .innerJoin(missions, eq(missions.id, dailyMissions.missionId))
       .leftJoin(zones, eq(zones.id, missions.zoneId))
+      .leftJoin(missionTemplates, eq(missionTemplates.id, missions.templateId))
       .where(
         and(
           eq(dailyMissions.userId, user.id),
@@ -107,8 +116,12 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
         dueDate: row.dueDate,
         checkCriteria: row.checkCriteria,
         userModified: row.userModified,
+        templateCriteria: row.templateCriteria,
         status: row.status,
       })),
+      pendingRewards: countPendingRewards(
+        await todayCompletions(tx, user.id, today),
+      ),
     };
   });
 }
@@ -234,4 +247,21 @@ export async function lastDoneDateOf(
       ),
     );
   return row?.date ?? null;
+}
+
+/** 그날 내가 한 완료(취소 포함). 적립 예정 수를 센다 */
+export async function todayCompletions(
+  tx: Tx,
+  userId: string,
+  today: LocalDate,
+): Promise<CompletionRecord[]> {
+  return tx
+    .select({
+      missionId: completions.missionId,
+      canceledAt: completions.canceledAt,
+    })
+    .from(completions)
+    .where(
+      and(eq(completions.userId, userId), eq(completions.localDate, today)),
+    );
 }
