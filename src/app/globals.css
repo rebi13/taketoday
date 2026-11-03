@@ -112,6 +112,9 @@
 @theme {
   --breakpoint-mid: 37.5rem;
   --breakpoint-wide: 52.5rem;
+  /* 같은 기준의 컨테이너 쿼리(@mid:). 두 영역으로 나뉘면 화면은 넓어도 칸은 좁아서,
+   * 카드 열 수처럼 놓인 자리의 폭을 따라야 하는 것은 이것을 쓴다(CLAUDE.md UI 규칙) */
+  --container-mid: 37.5rem;
 }
 
 @theme inline {
