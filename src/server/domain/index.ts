@@ -41,6 +41,7 @@ export {
 } from "./recommendations";
 export {
   countPendingRewards,
+  isChangeableDay,
   planCompletionReward,
   type CompletionRecord,
 } from "./completions";

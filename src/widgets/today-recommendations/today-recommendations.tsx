@@ -10,6 +10,7 @@ import {
   ZoneBadge,
 } from "@/entities/mission";
 import { PendingRewardMeter } from "@/entities/wallet";
+import { useCancelCompletion } from "@/features/cancel-completion";
 import { useCompleteMission } from "@/features/complete-mission";
 import { EditCriteriaSheet } from "@/features/edit-check-criteria";
 import { usePostponeMission } from "@/features/postpone-mission";
@@ -18,10 +19,21 @@ import { Button } from "@/shared/ui/button";
 import type { TodayData, TodayMissionData } from "./types";
 
 // S10 홈의 오늘의 추천과 적립 예정 n/10(screen-flow "하루 흐름").
-// 완료·내일로는 서버 응답을 기다리지 않고 먼저 표시한다(useOptimistic, ADR 0009).
+// 완료·내일로·되돌리기는 서버 응답을 기다리지 않고 먼저 표시한다(useOptimistic, ADR 0009).
+// 되돌린(취소한) 미션은 같은 날 "다시 완료"할 수 있다(기획서 6.5).
 // 카드를 누르면 P01 완료 기준 보기, 거기서도 완료·내 기준으로 바꾸기를 할 수 있다
 
-type Change = { missionId: string; status: "done" | "postponed" };
+type Change = {
+  missionId: string;
+  status: "done" | "postponed" | "canceled";
+};
+
+/** 지금 상태에서 그 변경을 할 수 있는가. 완료는 아직 안 한 것만, 취소는 완료한 것만 */
+const ALLOWED: Record<Change["status"], TodayMissionData["status"][]> = {
+  done: ["pending", "postponed", "canceled"],
+  postponed: ["pending"],
+  canceled: ["done"],
+};
 
 export function TodayRecommendations({ today }: { today: TodayData }) {
   const [state, apply] = useOptimistic(
@@ -30,7 +42,9 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
       const target = current.missions.find(
         (m) => m.missionId === change.missionId,
       );
-      if (!target || target.status === "done") return current;
+      if (!target || !ALLOWED[change.status].includes(target.status)) {
+        return current;
+      }
       return {
         ...current,
         missions: current.missions.map((m) =>
@@ -38,11 +52,13 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
             ? { ...m, status: change.status }
             : m,
         ),
-        // 정확한 수는 서버가 다시 센다. 상한까지만 먼저 올려 둔다
+        // 정확한 수는 서버가 다시 센다(상한을 넘긴 완료는 세지 않는다). 먼저 어림해 둔다
         pendingRewards:
           change.status === "done"
             ? Math.min(current.pendingRewards + 1, DAILY_PERSONAL_REWARD_CAP)
-            : current.pendingRewards,
+            : change.status === "canceled"
+              ? Math.max(current.pendingRewards - 1, 0)
+              : current.pendingRewards,
       };
     },
   );
@@ -50,9 +66,17 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
   const [justDone, setJustDone] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
 
-  const { complete, dialogs } = useCompleteMission((missionId) => {
-    apply({ missionId, status: "done" });
-    setJustDone(missionId);
+  const { cancel } = useCancelCompletion((missionId) => {
+    apply({ missionId, status: "canceled" });
+    setJustDone(null);
+  });
+  const { complete, dialogs } = useCompleteMission({
+    date: today.date,
+    markDone: (missionId) => {
+      apply({ missionId, status: "done" });
+      setJustDone(missionId);
+    },
+    onUndo: (missionId) => cancel(missionId, today.date),
   });
   const { postpone } = usePostponeMission((missionId) =>
     apply({ missionId, status: "postponed" }),

@@ -9,15 +9,20 @@ import {
   missionLists,
   missions,
 } from "@/server/db";
-import { canEditMission, planCompletionReward } from "@/server/domain";
-import { localDate } from "@/shared/lib/date";
+import {
+  canEditMission,
+  countPendingRewards,
+  isChangeableDay,
+  planCompletionReward,
+} from "@/server/domain";
+import { localDate, localDateSchema } from "@/shared/lib/date";
 import type { Tx } from "./lists";
 import { todayCompletions } from "./recommendations";
 import { getSessionUser } from "./session";
 
 // 완료와 내일로(구현 계획 3.2·5.3, screen-flow "하루 흐름").
 // 보상은 다음 날 정산한다(ADR 0003): 완료할 때는 completion만 만들고 재화 거래는 만들지 않는다.
-// 당일 취소·다시 완료는 #21.
+// 취소는 그날 안에서만, 지우지 않고 canceled_at을 채운다. 취소한 미션은 같은 날 다시 완료할 수 있다(새 completion).
 
 export type CompleteMissionResult =
   | {
@@ -33,11 +38,19 @@ export type CompleteMissionResult =
     }
   | {
       ok: false;
-      /** already: 오늘 이미 완료해 적립 예정인 미션(T03) */
-      reason: "login" | "invalid" | "not-found" | "already";
+      /**
+       * already: 오늘 이미 완료해 적립 예정인 미션(T03).
+       * past-day: 화면이 보던 날이 지났다(자정을 넘긴 화면에서 누름)
+       */
+      reason: "login" | "invalid" | "not-found" | "already" | "past-day";
     };
 
 const missionInputSchema = z.object({ missionId: z.uuid() });
+
+/** 화면이 보고 있던 날(서울 기준)을 함께 보내면 그날이 지났을 때 거부한다 */
+const dayInputSchema = missionInputSchema.extend({
+  date: localDateSchema.optional(),
+});
 
 /**
  * S10 완료. 추천 밖의 미션도 완료할 수 있다(그날의 미션을 recommended=false로 만든다).
@@ -49,10 +62,13 @@ export async function completeMission(
 ): Promise<CompleteMissionResult> {
   const user = await getSessionUser();
   if (!user) return { ok: false, reason: "login" };
-  const parsed = missionInputSchema.safeParse(input);
+  const parsed = dayInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
-  const { missionId } = parsed.data;
+  const { missionId, date } = parsed.data;
   const today = localDate();
+  if (date !== undefined && !isChangeableDay(date, today)) {
+    return { ok: false, reason: "past-day" };
+  }
 
   try {
     return await getDb().transaction(async (tx) => {
@@ -119,6 +135,72 @@ export async function completeMission(
     }
     throw error;
   }
+}
+
+export type CancelCompletionResult =
+  | { ok: true; pendingRewards: number }
+  | {
+      ok: false;
+      /** past-day: 자정이 지나 그날이 확정됐다(기획서 6.5) */
+      reason: "login" | "invalid" | "not-found" | "past-day";
+    };
+
+const cancelSchema = missionInputSchema.extend({ date: localDateSchema });
+
+/**
+ * 완료 취소(홈 T01 되돌리기, 기록 P04). 완료한 날 안에서만, 지우지 않고 canceled_at을 채운다.
+ * 한 트랜잭션: 그날의 미션과 취소하지 않은 완료 읽기 → 취소 표시·상태 쓰기 → 적립 예정 다시 세기.
+ * 취소할 완료가 없으면(이미 취소함) not-found
+ */
+export async function cancelCompletion(
+  input: unknown,
+): Promise<CancelCompletionResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, reason: "login" };
+  const parsed = cancelSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const { missionId, date } = parsed.data;
+  const today = localDate();
+  if (!isChangeableDay(date, today)) return { ok: false, reason: "past-day" };
+
+  return getDb().transaction(async (tx) => {
+    const [row] = await tx
+      .select({
+        dailyMissionId: dailyMissions.id,
+        completionId: completions.id,
+      })
+      .from(dailyMissions)
+      .innerJoin(
+        completions,
+        and(
+          eq(completions.dailyMissionId, dailyMissions.id),
+          isNull(completions.canceledAt),
+        ),
+      )
+      .where(
+        and(
+          eq(dailyMissions.userId, user.id),
+          eq(dailyMissions.missionId, missionId),
+          eq(dailyMissions.localDate, today),
+        ),
+      );
+    if (!row) return { ok: false, reason: "not-found" } as const;
+
+    await tx
+      .update(completions)
+      .set({ canceledAt: new Date() })
+      .where(eq(completions.id, row.completionId));
+    await tx
+      .update(dailyMissions)
+      .set({ status: "canceled" })
+      .where(eq(dailyMissions.id, row.dailyMissionId));
+    return {
+      ok: true,
+      pendingRewards: countPendingRewards(
+        await todayCompletions(tx, user.id, today),
+      ),
+    } as const;
+  });
 }
 
 export type PostponeMissionResult =

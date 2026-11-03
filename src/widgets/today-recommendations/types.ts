@@ -13,6 +13,8 @@ export type TodayMissionData = {
 };
 
 export type TodayData = {
+  /** 서울 기준 오늘. 완료·취소할 때 함께 보내 자정을 넘긴 화면을 거른다 */
+  date: string;
   missions: TodayMissionData[];
   pendingRewards: number;
 };
