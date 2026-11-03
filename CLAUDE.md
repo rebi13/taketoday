@@ -7,6 +7,7 @@
 - 어떻게·어떤 순서로: `docs/implementation-plan.md` (스택, 구조, 마일스톤 M0~M7)
 - 화면과 팝업의 흐름: `docs/screen-flow.md` (S/P/T/E/N ID 체계)
 - 왜 그렇게 정했는지: `docs/adr/`
+- 지난 마일스톤에서 배운 것: `docs/retrospectives/`
 - 초기 데이터: `seed/`
 - 외부 서비스(Neon·Vercel·구글 로그인) 설정과 환경변수: `docs/setup.md`
 - PR 자동 리뷰(Claude Code GitHub Actions): `docs/setup-code-review.md`
