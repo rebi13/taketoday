@@ -296,7 +296,9 @@ export function MissionForm({ zones, mission, today, fromToday }: Props) {
         onChange={setCriteria}
       />
 
-      <div className="flex flex-col gap-2">
+      {/* 저장 버튼은 화면 아래에 붙여 둔다(좁은 화면은 하단 탭바 위, 넓은 화면은 오른쪽 칸 아래).
+          긴 입력 화면에서 끝까지 스크롤하지 않아도 저장할 수 있게 */}
+      <div className="sticky bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] -mx-4 flex flex-col gap-2 border-t bg-background px-4 py-3 wide:bottom-0 wide:mx-0 wide:px-0">
         {state?.status === "error" && (
           <p role="alert" className="text-sm text-destructive">
             {state.message}
