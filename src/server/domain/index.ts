@@ -39,3 +39,8 @@ export {
   type RecommendableMission,
   type Season,
 } from "./recommendations";
+export {
+  countPendingRewards,
+  planCompletionReward,
+  type CompletionRecord,
+} from "./completions";

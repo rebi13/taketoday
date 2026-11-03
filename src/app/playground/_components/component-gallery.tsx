@@ -48,8 +48,11 @@ import {
   SheetTrigger,
 } from "@/shared/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { PendingRewardMeter } from "@/entities/wallet";
 import {
   CheckCriteriaFieldSample,
+  RewardDialogsSample,
+  SelectableMissionCardSample,
   SelectSample,
   ToastSample,
 } from "./client-samples";
@@ -314,6 +317,22 @@ export function ComponentGallery() {
 
       <Section title="Sonner (토스트)">
         <ToastSample />
+      </Section>
+
+      <Section title="MissionCard onSelect (홈 추천 카드)">
+        <SelectableMissionCardSample />
+      </Section>
+
+      <Section title="PendingRewardMeter (entities/wallet)">
+        <div className="grid gap-2 mid:grid-cols-3">
+          <PendingRewardMeter count={0} />
+          <PendingRewardMeter count={3} />
+          <PendingRewardMeter count={10} />
+        </div>
+      </Section>
+
+      <Section title="P08 · P03 (features/complete-mission)">
+        <RewardDialogsSample />
       </Section>
 
       <Section title="Textarea">
