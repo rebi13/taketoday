@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { CheckCriteriaField, MissionCard } from "@/entities/mission";
+import { CancelConfirmDialog } from "@/features/cancel-completion";
 import {
   DailyCapDialog,
   FirstCompletionDialog,
@@ -58,7 +59,7 @@ export function CheckCriteriaFieldSample() {
 }
 
 export function RewardDialogsSample() {
-  const [open, setOpen] = useState<"first" | "cap" | null>(null);
+  const [open, setOpen] = useState<"first" | "cap" | "cancel" | null>(null);
   return (
     <div className="flex flex-wrap gap-2">
       <Button type="button" variant="outline" onClick={() => setOpen("first")}>
@@ -67,6 +68,15 @@ export function RewardDialogsSample() {
       <Button type="button" variant="outline" onClick={() => setOpen("cap")}>
         P03 보상 다 모음
       </Button>
+      <Button type="button" variant="outline" onClick={() => setOpen("cancel")}>
+        P04 완료 취소 확인
+      </Button>
+      <CancelConfirmDialog
+        name="책상 위 컵 치우기"
+        open={open === "cancel"}
+        onOpenChange={(next) => !next && setOpen(null)}
+        onConfirm={() => toast("완료를 취소했어요")}
+      />
       <FirstCompletionDialog
         open={open === "first"}
         onOpenChange={(next) => !next && setOpen(null)}

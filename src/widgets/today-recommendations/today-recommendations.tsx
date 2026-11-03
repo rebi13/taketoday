@@ -10,7 +10,10 @@ import {
   ZoneBadge,
 } from "@/entities/mission";
 import { PendingRewardMeter } from "@/entities/wallet";
-import { useCancelCompletion } from "@/features/cancel-completion";
+import {
+  CancelConfirmDialog,
+  useCancelCompletion,
+} from "@/features/cancel-completion";
 import { useCompleteMission } from "@/features/complete-mission";
 import { EditCriteriaSheet } from "@/features/edit-check-criteria";
 import { usePostponeMission } from "@/features/postpone-mission";
@@ -21,7 +24,8 @@ import type { TodayData, TodayMissionData } from "./types";
 // S10 홈의 오늘의 추천과 적립 예정 n/10(screen-flow "하루 흐름").
 // 완료·내일로·되돌리기는 서버 응답을 기다리지 않고 먼저 표시한다(useOptimistic, ADR 0009).
 // 되돌린(취소한) 미션은 같은 날 "다시 완료"할 수 있다(기획서 6.5).
-// 카드를 누르면 P01 완료 기준 보기, 거기서도 완료·내 기준으로 바꾸기를 할 수 있다
+// 카드를 누르면 P01 완료 기준 보기, 거기서도 완료·내 기준으로 바꾸기를 할 수 있다.
+// 완료한 카드의 P01에는 "완료 취소"가 있다(P04로 한 번 묻는다)
 
 type Change = {
   missionId: string;
@@ -65,6 +69,8 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
   /** 방금 완료한 카드(P02 짧은 연출) */
   const [justDone, setJustDone] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
+  /** P04로 취소를 묻고 있는 미션 */
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
 
   const { cancel } = useCancelCompletion((missionId) => {
     apply({ missionId, status: "canceled" });
@@ -82,6 +88,9 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
     apply({ missionId, status: "postponed" }),
   );
   const openedMission = state.missions.find((m) => m.missionId === opened);
+  const cancelTarget = state.missions.find(
+    (m) => m.missionId === confirmCancel,
+  );
 
   return (
     <section aria-label="오늘의 추천" className="flex flex-col gap-4">
@@ -135,7 +144,19 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
             />
           }
           actions={
-            openedMission.status === "done" ? undefined : (
+            openedMission.status === "done" ? (
+              // 완료 알림(T01)을 놓쳐도 그날 안에는 여기서 취소한다. P04로 한 번 묻는다
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOpened(null);
+                  setConfirmCancel(openedMission.missionId);
+                }}
+              >
+                완료 취소
+              </Button>
+            ) : (
               <Button
                 type="button"
                 onClick={() => {
@@ -143,12 +164,20 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
                   complete(openedMission.missionId);
                 }}
               >
-                완료
+                {openedMission.status === "canceled" ? "다시 완료" : "완료"}
               </Button>
             )
           }
         />
       )}
+      <CancelConfirmDialog
+        name={cancelTarget?.name ?? ""}
+        open={cancelTarget !== undefined}
+        onOpenChange={(open) => !open && setConfirmCancel(null)}
+        onConfirm={() => {
+          if (cancelTarget) cancel(cancelTarget.missionId, today.date);
+        }}
+      />
       {dialogs}
     </section>
   );
