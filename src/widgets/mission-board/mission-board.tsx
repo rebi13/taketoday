@@ -138,7 +138,7 @@ function ZoneGroups<T extends { id: string; zoneId: string | null }>({
     <section
       key={group.zone?.id ?? "none"}
       aria-label={group.zone?.name ?? "구역 없음"}
-      className="flex flex-col gap-2"
+      className="@container flex flex-col gap-2"
     >
       <div className="flex min-h-11 items-center justify-between gap-2">
         <h2>
@@ -146,9 +146,13 @@ function ZoneGroups<T extends { id: string; zoneId: string | null }>({
         </h2>
         {headerAction?.(group)}
       </div>
-      <ul className="grid gap-2 mid:grid-cols-2">
+      {/* 화면 폭이 아니라 목록 칸의 폭으로 2열을 정한다. 두 영역 분할에서 칸이 좁으면 1열.
+          2열일 때 한 줄의 카드 높이를 맞춘다(li를 grid로 두어 카드가 칸을 채운다) */}
+      <ul className="grid gap-2 @mid:grid-cols-2">
         {group.items.map((item) => (
-          <li key={item.id}>{render(item)}</li>
+          <li key={item.id} className="grid">
+            {render(item)}
+          </li>
         ))}
       </ul>
     </section>

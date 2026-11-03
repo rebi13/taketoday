@@ -11,21 +11,25 @@ import {
 import {
   canEditMission,
   isCycleDays,
-  normalizeCheckCriteria,
+  normalizeOneLine,
   pickBrowsableTemplates,
   planCriteriaChange,
+  planMissionSchedule,
   type CriteriaPatch,
   type CriteriaTemplate,
+  type MissionSchedule,
 } from "@/server/domain";
 import {
   CHECK_CRITERIA_MAX_LENGTH,
   MISSION_BATCH_MAX,
+  MISSION_NAME_MAX_LENGTH,
 } from "@/shared/config/constants";
-import { ensurePersonalList } from "./lists";
+import { localDate } from "@/shared/lib/date";
+import { ensurePersonalList, type Tx } from "./lists";
 import { getSessionUser } from "./session";
 
-// S11 내 미션 목록과 S15 기본 미션 둘러보기(#15).
-// 상세(S12)·완료 기준 바꾸기는 #16, 직접 만들기(S13)는 #17.
+// S11 내 미션 목록과 S15 기본 미션 둘러보기(#15), S12 상세와 완료 기준 바꾸기(#16),
+// S13 직접 만들기·수정(#17).
 
 export type MissionZone = { id: string; name: string; icon: string };
 
@@ -314,6 +318,8 @@ export type MissionDetail = {
   /** 사용자가 완료 기준을 고쳤다 */
   userModified: boolean;
   active: boolean;
+  /** 기본 미션에서 켠 것. 직접 만든 미션만 S13에서 고친다 */
+  fromTemplate: boolean;
   /** 기본 미션의 지금 기준. 직접 만든 미션이면 null. "기본 기준으로 되돌리기"에 쓴다 */
   templateCriteria: string | null;
   /** 마지막으로 완료한 날(localDate). 완료 기록(M2, #19)이 생기기 전까지 null */
@@ -347,6 +353,7 @@ export async function getMissionDetail(
       zoneId: zones.id,
       zoneName: zones.name,
       zoneIcon: zones.icon,
+      templateId: missions.templateId,
       templateCriteria: missionTemplates.checkCriteria,
     })
     .from(missions)
@@ -380,6 +387,7 @@ export async function getMissionDetail(
     checkCriteria: row.checkCriteria,
     userModified: row.userModified,
     active: row.active,
+    fromTemplate: row.templateId !== null,
     templateCriteria: row.templateCriteria,
     lastDoneDate: null,
   };
@@ -406,7 +414,7 @@ export async function updateCheckCriteria(
 ): Promise<CriteriaChangeResult> {
   const parsed = updateCriteriaSchema.safeParse(input);
   if (!parsed.success) return { ok: false, reason: "invalid" };
-  const criteria = normalizeCheckCriteria(
+  const criteria = normalizeOneLine(
     parsed.data.checkCriteria,
     CHECK_CRITERIA_MAX_LENGTH,
   );
@@ -506,5 +514,256 @@ export async function turnOnTemplate(
         .onConflictDoNothing();
     }
     return { ok: true } as const;
+  });
+}
+
+// ── S13 미션 만들기·수정(#17, 기획서 6.4) ──
+// 개수 상한은 두지 않는다. 보상이 하루 10회까지라 많이 만들어도 이득이 없다.
+// AI가 만든 초안(M6)도 미리보기에서 고친 뒤 이 createMission으로 저장한다
+
+/** S13 입력값. 고칠 때는 지금 값으로 채운다 */
+export type MissionFormValues = {
+  name: string;
+  zoneId: string | null;
+  kind: "recurring" | "once";
+  cycleDays: number | null;
+  dueDate: string | null;
+  checkCriteria: string;
+};
+
+export type MissionEditor = {
+  /** 구역 순서(시드 order) */
+  zones: MissionZone[];
+  /** 고칠 미션. 새로 만들 때는 null */
+  mission: (MissionFormValues & { id: string }) | null;
+};
+
+const editorSchema = z.object({ missionId: z.uuid().optional() });
+
+/**
+ * S13 화면 데이터. 로그인이 안 됐거나, 고칠 미션이 없거나 남의 것이거나 지웠거나
+ * 기본 미션에서 켠 것이면 null(기본 미션은 S12의 주기 바꾸기·내 기준으로 바꾸기로 고친다)
+ */
+export async function getMissionEditor(
+  input: unknown = {},
+): Promise<MissionEditor | null> {
+  const user = await getSessionUser();
+  if (!user) return null;
+  const parsed = editorSchema.safeParse(input);
+  if (!parsed.success) return null;
+  const { missionId } = parsed.data;
+  const db = getDb();
+
+  const [zoneRows, [row]] = await Promise.all([
+    db
+      .select({ id: zones.id, name: zones.name, icon: zones.icon })
+      .from(zones)
+      .orderBy(asc(zones.sortOrder)),
+    missionId
+      ? db
+          .select({
+            id: missions.id,
+            name: missions.name,
+            zoneId: missions.zoneId,
+            kind: missions.kind,
+            cycleDays: missions.cycleDays,
+            dueDate: missions.dueDate,
+            checkCriteria: missions.checkCriteria,
+            templateId: missions.templateId,
+            deletedAt: missions.deletedAt,
+            ownerType: missionLists.ownerType,
+            ownerId: missionLists.ownerId,
+          })
+          .from(missions)
+          .innerJoin(missionLists, eq(missionLists.id, missions.listId))
+          .where(eq(missions.id, missionId))
+      : Promise.resolve([]),
+  ]);
+  if (!missionId) return { zones: zoneRows, mission: null };
+  if (
+    !row ||
+    row.templateId !== null ||
+    !canEditMission(
+      {
+        deletedAt: row.deletedAt,
+        list: { ownerType: row.ownerType, ownerId: row.ownerId },
+      },
+      { userId: user.id },
+    )
+  ) {
+    return null;
+  }
+  return {
+    zones: zoneRows,
+    mission: {
+      id: row.id,
+      name: row.name,
+      zoneId: row.zoneId,
+      kind: row.kind,
+      cycleDays: row.cycleDays,
+      dueDate: row.dueDate,
+      checkCriteria: row.checkCriteria,
+    },
+  };
+}
+
+export type SaveMissionResult =
+  | { ok: true; missionId: string }
+  | {
+      ok: false;
+      reason:
+        | "login"
+        | "invalid"
+        | "not-found"
+        | "invalid-zone"
+        | "name-empty"
+        | "name-too-long"
+        | "criteria-empty"
+        | "criteria-too-long"
+        | "invalid-cycle"
+        | "invalid-due"
+        | "past-due"
+        | "far-due";
+    };
+
+const missionFormSchema = z.object({
+  name: z.string(),
+  zoneId: z.string().min(1).nullable(),
+  kind: z.enum(["recurring", "once"]),
+  cycleDays: z.number().nullish(),
+  dueDate: z.string().nullish(),
+  checkCriteria: z.string(),
+});
+
+type MissionFormInput = z.infer<typeof missionFormSchema>;
+
+type PlannedMission = {
+  name: string;
+  zoneId: string | null;
+  checkCriteria: string;
+} & MissionSchedule;
+
+type FormFailure = Extract<SaveMissionResult, { ok: false }>;
+
+/** 이름·완료 기준을 정리하고 종류에 맞는 일정만 남긴다(DB를 보지 않는 검사) */
+function planMissionForm(
+  form: MissionFormInput,
+  { today, currentDueDate }: { today: string; currentDueDate?: string | null },
+): { ok: true; values: PlannedMission } | FormFailure {
+  const name = normalizeOneLine(form.name, MISSION_NAME_MAX_LENGTH);
+  if (!name.ok) return { ok: false, reason: `name-${name.reason}` };
+  const criteria = normalizeOneLine(
+    form.checkCriteria,
+    CHECK_CRITERIA_MAX_LENGTH,
+  );
+  if (!criteria.ok) return { ok: false, reason: `criteria-${criteria.reason}` };
+  const schedule = planMissionSchedule(form, { today, currentDueDate });
+  if (!schedule.ok) return schedule;
+  return {
+    ok: true,
+    values: {
+      name: name.text,
+      zoneId: form.zoneId,
+      checkCriteria: criteria.text,
+      ...schedule.schedule,
+    },
+  };
+}
+
+async function zoneExists(tx: Tx, zoneId: string | null): Promise<boolean> {
+  if (zoneId === null) return true;
+  const [zone] = await tx
+    .select({ id: zones.id })
+    .from(zones)
+    .where(eq(zones.id, zoneId));
+  return zone !== undefined;
+}
+
+const createMissionSchema = missionFormSchema.extend({
+  createdBy: z.enum(["user", "ai"]).default("user"),
+});
+
+/**
+ * S13 직접 만들기. 내 리스트에 켠 채로 넣는다.
+ * 한 트랜잭션: 구역 확인 → 리스트 확인(없으면 만듦) → 미션 쓰기
+ */
+export async function createMission(
+  input: unknown,
+): Promise<SaveMissionResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, reason: "login" };
+  const parsed = createMissionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const planned = planMissionForm(parsed.data, { today: localDate() });
+  if (!planned.ok) return planned;
+  const values = planned.values;
+
+  return getDb().transaction(async (tx) => {
+    if (!(await zoneExists(tx, values.zoneId))) {
+      return { ok: false, reason: "invalid-zone" } as const;
+    }
+    const list = await ensurePersonalList(tx, user.id);
+    const [created] = await tx
+      .insert(missions)
+      .values({ ...values, listId: list.id, createdBy: parsed.data.createdBy })
+      .returning({ id: missions.id });
+    return { ok: true, missionId: created.id } as const;
+  });
+}
+
+const updateMissionSchema = missionFormSchema.extend({ missionId: z.uuid() });
+
+/**
+ * S13 수정. 직접 만든 미션만 고친다.
+ * 한 트랜잭션: 미션과 리스트 주인 읽기 → 권한 확인 → 값 계산(원래 마감 기준) → 구역 확인 → 쓰기
+ */
+export async function updateMission(
+  input: unknown,
+): Promise<SaveMissionResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, reason: "login" };
+  const parsed = updateMissionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const { missionId } = parsed.data;
+
+  return getDb().transaction(async (tx) => {
+    const [row] = await tx
+      .select({
+        dueDate: missions.dueDate,
+        templateId: missions.templateId,
+        deletedAt: missions.deletedAt,
+        ownerType: missionLists.ownerType,
+        ownerId: missionLists.ownerId,
+      })
+      .from(missions)
+      .innerJoin(missionLists, eq(missionLists.id, missions.listId))
+      .where(eq(missions.id, missionId));
+    if (
+      !row ||
+      row.templateId !== null ||
+      !canEditMission(
+        {
+          deletedAt: row.deletedAt,
+          list: { ownerType: row.ownerType, ownerId: row.ownerId },
+        },
+        { userId: user.id },
+      )
+    ) {
+      return { ok: false, reason: "not-found" } as const;
+    }
+
+    const planned = planMissionForm(parsed.data, {
+      today: localDate(),
+      currentDueDate: row.dueDate,
+    });
+    if (!planned.ok) return planned;
+    if (!(await zoneExists(tx, planned.values.zoneId))) {
+      return { ok: false, reason: "invalid-zone" } as const;
+    }
+    await tx
+      .update(missions)
+      .set(planned.values)
+      .where(eq(missions.id, missionId));
+    return { ok: true, missionId } as const;
   });
 }

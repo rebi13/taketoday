@@ -1,10 +1,14 @@
+import { Plus } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getMissionBoard } from "@/server/services";
+import { Button } from "@/shared/ui/button";
 import { MissionBoard } from "@/widgets/mission-board";
 
 // 미션 탭: S11 내 미션 목록 + S15 기본 미션 둘러보기(탭) | S12 미션 상세.
-// 목록은 상세를 오가도 다시 그리지 않도록 레이아웃에 둔다. 직접 만들기(S13)는 #17
+// 목록은 상세를 오가도 다시 그리지 않도록 레이아웃에 둔다. "+ 추가"는 S13 직접 만들기로 간다
+// (AI로 만들기 S14를 고르는 단계는 M6)
 export default function MissionsLayout({ children }: LayoutProps<"/missions">) {
   // 두 영역(구현 계획 "화면 기준"): 840 미만은 목록과 상세 중 하나만, 840 이상은 왼쪽 목록 · 오른쪽 상세.
   // 상세가 열렸는지는 상세 화면의 data-mission-detail 표시로 CSS(:has)가 알아챈다.
@@ -14,7 +18,15 @@ export default function MissionsLayout({ children }: LayoutProps<"/missions">) {
   return (
     <main className="group/split flex flex-1 flex-col wide:grid wide:grid-cols-2 wide:items-start wide:gap-6 wide:px-4">
       <div className="flex flex-col gap-4 px-4 pt-4 pb-6 wide:px-0 max-wide:group-has-[[data-mission-detail]:not([style*=display])]/split:hidden">
-        <h1 className="text-xl font-semibold">미션</h1>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-xl font-semibold">미션</h1>
+          <Button asChild variant="outline">
+            <Link href="/missions/new">
+              <Plus aria-hidden data-icon="inline-start" />
+              추가
+            </Link>
+          </Button>
+        </div>
         <Suspense>
           <Board />
         </Suspense>

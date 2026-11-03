@@ -48,6 +48,11 @@ import {
   SheetTrigger,
 } from "@/shared/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import {
+  CheckCriteriaFieldSample,
+  SelectSample,
+  ToastSample,
+} from "./client-samples";
 
 // shared/ui에 컴포넌트나 변형을 추가하면 여기에도 추가한다 (CLAUDE.md UI 규칙).
 const BUTTON_VARIANTS = [
@@ -300,6 +305,17 @@ export function ComponentGallery() {
         </div>
       </Section>
 
+      <Section title="Select">
+        <p className="text-sm text-muted-foreground">
+          높이 44px, 글자 16px. 항목도 44px.
+        </p>
+        <SelectSample />
+      </Section>
+
+      <Section title="Sonner (토스트)">
+        <ToastSample />
+      </Section>
+
       <Section title="Textarea">
         <Textarea placeholder="여러 줄 입력" rows={3} />
       </Section>
@@ -321,6 +337,10 @@ export function ComponentGallery() {
         >
           <Button variant="outline">P01 완료 기준 보기</Button>
         </CheckCriteriaDialog>
+      </Section>
+
+      <Section title="CheckCriteriaField (entities/mission, P25·S13)">
+        <CheckCriteriaFieldSample />
       </Section>
 
       <Section title="CharacterFigure (entities/character, 임시 도형)">

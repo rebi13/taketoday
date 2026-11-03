@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   canEditMission,
   isCycleDays,
-  normalizeCheckCriteria,
+  normalizeOneLine,
   pickBrowsableTemplates,
   planCriteriaChange,
+  planMissionSchedule,
 } from "./missions";
 
 describe("isCycleDays", () => {
@@ -61,23 +62,23 @@ describe("pickBrowsableTemplates", () => {
   });
 });
 
-describe("normalizeCheckCriteria", () => {
+describe("normalizeOneLine", () => {
   it("줄바꿈과 연속 공백을 공백 하나로 줄인다", () => {
     expect(
-      normalizeCheckCriteria("  수세미로\n세면대를   한 바퀴 닦으면 완료 ", 80),
+      normalizeOneLine("  수세미로\n세면대를   한 바퀴 닦으면 완료 ", 80),
     ).toEqual({ ok: true, text: "수세미로 세면대를 한 바퀴 닦으면 완료" });
   });
 
   it("비어 있거나 길면 받지 않는다", () => {
-    expect(normalizeCheckCriteria(" \n ", 80)).toEqual({
+    expect(normalizeOneLine(" \n ", 80)).toEqual({
       ok: false,
       reason: "empty",
     });
-    expect(normalizeCheckCriteria("가".repeat(81), 80)).toEqual({
+    expect(normalizeOneLine("가".repeat(81), 80)).toEqual({
       ok: false,
       reason: "too-long",
     });
-    expect(normalizeCheckCriteria("가".repeat(80), 80).ok).toBe(true);
+    expect(normalizeOneLine("가".repeat(80), 80).ok).toBe(true);
   });
 });
 
@@ -111,5 +112,80 @@ describe("planCriteriaChange", () => {
       checkCriteria: "5분 하면 완료",
       userModified: true,
     });
+  });
+});
+
+describe("planMissionSchedule", () => {
+  const today = "2026-11-03";
+
+  it("주기형은 주기만 남기고 마감은 버린다", () => {
+    expect(
+      planMissionSchedule(
+        { kind: "recurring", cycleDays: 7, dueDate: "2026-11-10" },
+        { today },
+      ),
+    ).toEqual({
+      ok: true,
+      schedule: { kind: "recurring", cycleDays: 7, dueDate: null },
+    });
+  });
+
+  it("주기형의 주기가 없거나 범위 밖이면 받지 않는다", () => {
+    for (const cycleDays of [undefined, null, 0, 366, 1.5]) {
+      expect(
+        planMissionSchedule({ kind: "recurring", cycleDays }, { today }),
+      ).toEqual({ ok: false, reason: "invalid-cycle" });
+    }
+  });
+
+  it("기한형은 마감만 남기고 주기는 버린다. 오늘 마감도 된다", () => {
+    expect(
+      planMissionSchedule(
+        { kind: "once", cycleDays: 3, dueDate: today },
+        { today },
+      ),
+    ).toEqual({
+      ok: true,
+      schedule: { kind: "once", cycleDays: null, dueDate: today },
+    });
+  });
+
+  it("기한형의 마감이 없거나 있는 날짜가 아니면 받지 않는다", () => {
+    for (const dueDate of [undefined, null, "", "2026-02-30", "11/10"]) {
+      expect(planMissionSchedule({ kind: "once", dueDate }, { today })).toEqual(
+        { ok: false, reason: "invalid-due" },
+      );
+    }
+  });
+
+  it("지난 날은 마감으로 새로 정할 수 없다(서울 기준 어제)", () => {
+    expect(
+      planMissionSchedule({ kind: "once", dueDate: "2026-11-02" }, { today }),
+    ).toEqual({ ok: false, reason: "past-due" });
+  });
+
+  it("마감은 오늘부터 365일 안", () => {
+    expect(
+      planMissionSchedule({ kind: "once", dueDate: "2027-11-03" }, { today })
+        .ok,
+    ).toBe(true);
+    expect(
+      planMissionSchedule({ kind: "once", dueDate: "2027-11-04" }, { today }),
+    ).toEqual({ ok: false, reason: "far-due" });
+  });
+
+  it("고칠 때 원래 마감을 그대로 두면 지난 날이어도 받는다", () => {
+    expect(
+      planMissionSchedule(
+        { kind: "once", dueDate: "2026-10-01" },
+        { today, currentDueDate: "2026-10-01" },
+      ).ok,
+    ).toBe(true);
+    expect(
+      planMissionSchedule(
+        { kind: "once", dueDate: "2026-10-02" },
+        { today, currentDueDate: "2026-10-01" },
+      ),
+    ).toEqual({ ok: false, reason: "past-due" });
   });
 });

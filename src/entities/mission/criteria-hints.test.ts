@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criteriaHints } from "./hints";
+import { criteriaHints } from "./criteria-hints";
 
 describe("criteriaHints", () => {
   it("행동으로 쓰고 '면 완료'로 끝나면 안내하지 않는다", () => {
