@@ -19,6 +19,15 @@ import {
 } from "@/shared/config/constants";
 import { addDays } from "@/shared/lib/date";
 import { Button } from "@/shared/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import {
   Select,
@@ -30,6 +39,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { saveMissionAction, type SaveMissionState } from "./actions";
 import { NO_ZONE } from "./no-zone";
+import { useLeaveGuard } from "./use-leave-guard";
 
 // S13 미션 만들기·수정(기획서 6.4, screen-flow "미션 관리").
 // 주기형(며칠마다)과 기한형(언제까지 한 번) 중 하나. 저장하면 T04를 띄우고
@@ -61,19 +71,44 @@ export function MissionForm({ zones, mission, today }: Props) {
   const router = useRouter();
   const backHref = mission ? `/missions/${mission.id}` : "/missions";
 
-  const [name, setName] = useState(mission?.name ?? "");
-  const [zoneId, setZoneId] = useState(mission?.zoneId ?? NO_ZONE);
-  const [kind, setKind] = useState(mission?.kind ?? "recurring");
-  const [cycleDays, setCycleDays] = useState(
-    String(mission?.cycleDays ?? DEFAULT_CYCLE_DAYS),
-  );
-  const [dueDate, setDueDate] = useState(mission?.dueDate ?? "");
-  const [criteria, setCriteria] = useState(mission?.checkCriteria ?? "");
+  const initial = {
+    name: mission?.name ?? "",
+    zoneId: mission?.zoneId ?? NO_ZONE,
+    kind: mission?.kind ?? "recurring",
+    cycleDays: String(mission?.cycleDays ?? DEFAULT_CYCLE_DAYS),
+    dueDate: mission?.dueDate ?? "",
+    criteria: mission?.checkCriteria ?? "",
+  };
+  const [name, setName] = useState(initial.name);
+  const [zoneId, setZoneId] = useState(initial.zoneId);
+  const [kind, setKind] = useState(initial.kind);
+  const [cycleDays, setCycleDays] = useState(initial.cycleDays);
+  const [dueDate, setDueDate] = useState(initial.dueDate);
+  const [criteria, setCriteria] = useState(initial.criteria);
+
+  // Next는 떠난 화면을 숨겨 두었다가 돌아오면 그대로 보여 준다.
+  // 저장했거나 버리고 나갔으면 다음에 열 때 처음 값으로 시작하도록 되돌린다
+  const reset = () => {
+    setName(initial.name);
+    setZoneId(initial.zoneId);
+    setKind(initial.kind);
+    setCycleDays(initial.cycleDays);
+    setDueDate(initial.dueDate);
+    setCriteria(initial.criteria);
+  };
+  const dirty =
+    name !== initial.name ||
+    zoneId !== initial.zoneId ||
+    kind !== initial.kind ||
+    cycleDays !== initial.cycleDays ||
+    dueDate !== initial.dueDate ||
+    criteria !== initial.criteria;
 
   const [state, formAction, pending] = useActionState(
     async (previous: SaveMissionState, formData: FormData) => {
       const next = await saveMissionAction(previous, formData);
       if (next?.status === "saved") {
+        reset();
         toast.success("저장했어요");
         router.push(next.href);
       }
@@ -81,6 +116,7 @@ export function MissionForm({ zones, mission, today }: Props) {
     },
     null,
   );
+  const leave = useLeaveGuard(dirty && !pending);
 
   const nameLength = oneLineLength(name);
   const criteriaLength = oneLineLength(criteria);
@@ -235,6 +271,38 @@ export function MissionForm({ zones, mission, today }: Props) {
           저장
         </Button>
       </div>
+
+      <Dialog
+        open={leave.pendingHref !== null}
+        onOpenChange={(open) => !open && leave.stay()}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>적던 내용이 있어요</DialogTitle>
+            <DialogDescription>
+              지금 나가면 적은 내용은 저장되지 않아요.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                계속 쓰기
+              </Button>
+            </DialogClose>
+            <Button
+              type="button"
+              onClick={() => {
+                const href = leave.pendingHref;
+                leave.stay();
+                reset();
+                if (href) router.push(href);
+              }}
+            >
+              나가기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

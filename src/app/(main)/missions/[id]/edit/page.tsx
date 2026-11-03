@@ -26,8 +26,9 @@ async function Editor({
   if (!editor?.mission) notFound();
   return (
     <MissionForm
-      // 다른 미션으로 옮겨 가면 입력값을 새로 시작한다
-      key={editor.mission.id}
+      // 다른 미션으로 옮겨 가거나 저장해 값이 바뀌면 입력값을 새로 시작한다.
+      // Next가 떠난 화면을 숨겨 두었다 다시 보여 주므로 id만으로는 옛 값이 남는다
+      key={JSON.stringify(editor.mission)}
       zones={editor.zones}
       mission={editor.mission}
       today={localDate()}
