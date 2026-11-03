@@ -189,7 +189,9 @@ function Meta({ mission }: { mission: TodayMissionData }) {
       <ZoneBadge zone={mission.zone} />
       {mission.status === "postponed"
         ? "내일 다시 추천할게요"
-        : describeSchedule(mission)}
+        : mission.status === "canceled"
+          ? "완료를 취소했어요. 오늘 안에 다시 할 수 있어요"
+          : describeSchedule(mission)}
     </span>
   );
 }

@@ -25,7 +25,8 @@ const missionCard = cva(
         pending: "border-border",
         done: "border-transparent bg-muted opacity-80",
         postponed: "border-dashed border-postponed",
-        canceled: "border-border line-through opacity-60",
+        // 취소한 미션은 같은 날 다시 할 수 있으므로 대기와 같은 모양(줄 긋기·흐리게 하지 않는다)
+        canceled: "border-border",
       },
       size: {
         default: "p-4",
