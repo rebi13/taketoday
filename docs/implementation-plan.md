@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-03 | 오늘의 추천 저장(#19): `daily_missions`(추천 순서 `recommend_rank`, 추천 밖에서 한 것은 null)·`completions`(같은 날짜별 미션에 취소 안 한 완료는 하나). 추천이 0개인 날도 다시 만들지 않도록 `recommendation_days`(user_id, local_date) 표시를 둔다 |
 | 2026-11-03 | 추천 함수(#18): 주기형은 할 때가 된 것(밀린 정도 1 이상)만 후보, 한 번도 안 한 미션은 들어온 날 1에서 시작. 순서는 전날 "내일로" → 기한형(마감 가까운 순) → 주기형. 후보가 모자라면 적게 추천. 계절은 3~5·6~8·9~11·12~2월 |
 | 2026-11-01 | 온보딩 S05·S07(#14): 거주 형태·조건 → 처음 켜질 미션 미리보기(S06 합침), 알림 시간(기본 08:00)·쉬는 날. 마치면 한 트랜잭션에서 개인 리스트·기본 미션·쉬는 날·완료 표시. 조건 미션은 `기본`인 것만 켬 |
 | 2026-11-01 | 랜덤 닉네임(#57): 약관 동의 때 형용사+명사+숫자 4자리로 생성, `users.nickname` 유니크, 겹치면 재시도. 기존 사용자는 마이그레이션으로 채움. 설정에서 수정. 이름 검사를 `normalizeName()` 하나로 |
@@ -344,8 +345,9 @@ taketoday/
 | zones, mission_templates | 시드로만 변경 |
 | mission_lists | owner_type(`user` / `group`), MVP는 `user`만 생성 |
 | missions | kind(`recurring` / `once`), cycle_days 또는 due_date 중 하나 필수(CHECK), created_by(`user` / `ai`), assignment 관련 컬럼 nullable |
-| daily_missions | (user_id, mission_id, local_date) 유니크 |
-| completions | local_date 인덱스, canceled_at, settlement_id nullable |
+| recommendation_days | (user_id, local_date) 기본 키 — 그날 추천을 만들었다는 표시(0개인 날 포함), 동시 첫 요청도 한 번만 |
+| daily_missions | (user_id, mission_id, local_date) 유니크, recommend_rank(추천 순서, 추천 밖이면 null) |
+| completions | local_date 인덱스, canceled_at, settlement_id nullable, daily_mission당 취소 안 한 완료 하나(부분 유니크) |
 | daily_settlements | **(user_id, local_date) 유니크** — 중복 정산 방지의 핵심 |
 | wallet_transactions | reason enum에 `personal_reward`, `shared_reward`, `purchase` 등 미리 정의 |
 | items, inventories | inventories (user_id, item_id) 유니크 |

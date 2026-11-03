@@ -5,10 +5,15 @@ export function describeCycle(cycleDays: number): string {
   return cycleDays === 1 ? "매일" : `${cycleDays}일마다`;
 }
 
+/** "2026-11-10" → "11월 10일" */
+export function describeDate(date: string): string {
+  const [, month, day] = date.split("-").map(Number);
+  return `${month}월 ${day}일`;
+}
+
 /** "2026-11-10" → "11월 10일까지" */
 export function describeDue(dueDate: string): string {
-  const [, month, day] = dueDate.split("-").map(Number);
-  return `${month}월 ${day}일까지`;
+  return `${describeDate(dueDate)}까지`;
 }
 
 export function describeSchedule(mission: {
