@@ -47,3 +47,58 @@ export function pickBrowsableTemplates<T extends { id: string }>(
   );
   return templates.filter((t) => !owned.has(t.id));
 }
+
+// ── 완료 기준 바꾸기 (P25, 기획서 8.2.1) ──
+
+export type CriteriaResult =
+  { ok: true; text: string } | { ok: false; reason: "empty" | "too-long" };
+
+/**
+ * 완료 기준 문장을 정리한다. 한 문장이므로 줄바꿈·연속 공백은 공백 하나로 줄인다.
+ * 길이는 DB의 char_length와 같은 기준(코드 포인트)으로 센다
+ */
+export function normalizeCheckCriteria(
+  raw: string,
+  maxLength: number,
+): CriteriaResult {
+  const text = raw.replace(/\s+/g, " ").trim();
+  if (!text) return { ok: false, reason: "empty" };
+  if ([...text].length > maxLength) return { ok: false, reason: "too-long" };
+  return { ok: true, text };
+}
+
+export type CriteriaTemplate = {
+  name: string;
+  checkCriteria: string;
+  version: number;
+};
+
+export type CriteriaPatch =
+  | { checkCriteria: string; userModified: true }
+  | {
+      checkCriteria: string;
+      userModified: false;
+      name: string;
+      templateVersion: number;
+    };
+
+/**
+ * 완료 기준을 바꿀 때 미션에 쓸 값. 고친 기준은 user_modified로 표시해
+ * 기본 미션 문장이 바뀌어도 덮어쓰지 않는다.
+ * 기본 기준과 같은 문장이면(되돌리기 포함) 다시 기본 미션을 따라가게 하고,
+ * 그사이 바뀐 기본 미션의 이름·버전도 함께 맞춘다
+ */
+export function planCriteriaChange(
+  text: string,
+  template: CriteriaTemplate | null,
+): CriteriaPatch {
+  if (template && text === template.checkCriteria) {
+    return {
+      checkCriteria: template.checkCriteria,
+      userModified: false,
+      name: template.name,
+      templateVersion: template.version,
+    };
+  }
+  return { checkCriteria: text, userModified: true };
+}

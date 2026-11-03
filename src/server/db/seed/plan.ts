@@ -55,3 +55,30 @@ export function planTemplates(
   plan.orphaned = existing.filter((t) => !seedIds.has(t.id)).map((t) => t.id);
   return plan;
 }
+
+export type SyncCandidate = {
+  id: string;
+  userModified: boolean;
+  deletedAt: Date | null;
+  templateVersion: number | null;
+};
+
+/**
+ * 템플릿 문장(이름·완료 기준)이 바뀌었을 때 따라 바꿀 사용자 미션.
+ * 사용자가 완료 기준을 고친 미션(user_modified)은 덮어쓰지 않는다(기획서 8.2.1·18장).
+ * 지운 미션과 이미 이 버전을 반영한 미션도 건너뛴다
+ */
+export function pickMissionsToSync(
+  candidates: readonly SyncCandidate[],
+  templateVersion: number,
+): string[] {
+  return candidates
+    .filter(
+      (m) =>
+        !m.userModified &&
+        m.deletedAt === null &&
+        m.templateVersion !== null &&
+        m.templateVersion < templateVersion,
+    )
+    .map((m) => m.id);
+}

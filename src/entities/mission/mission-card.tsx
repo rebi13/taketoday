@@ -1,4 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 
@@ -6,7 +7,8 @@ import { cn } from "@/shared/lib/utils";
 // 내 미션 목록(S11)·기본 미션 둘러보기(S15)는 compact, 꺼 둔 미션은 active=false.
 // status "none"은 날짜와 상관없이 미션 자체를 보여줄 때(S11·S15).
 const missionCard = cva(
-  "flex items-center gap-3 rounded-xl border transition-colors duration-(--duration-fast)",
+  // href가 있으면 카드 전체가 링크다(제목의 ::after가 카드를 덮는다). 동작 영역은 그 위에 놓는다
+  "relative flex items-center gap-3 rounded-xl border transition-colors duration-(--duration-fast) has-[a:focus-visible]:ring-3 has-[a:focus-visible]:ring-ring/50",
   {
     // 뒤에 오는 변형이 앞의 같은 속성을 덮는다(cn = tailwind-merge). 상태가 켜기·끄기보다 우선
     variants: {
@@ -32,6 +34,8 @@ const missionCard = cva(
 
 type Props = VariantProps<typeof missionCard> & {
   name: string;
+  /** 누르면 갈 곳(S12 미션 상세) */
+  href?: string;
   /** 주기·마감처럼 이름 아래 한 줄 */
   meta?: ReactNode;
   /** 오른쪽 끝 동작(켜기 스위치, 더 보기 메뉴 등) */
@@ -41,6 +45,7 @@ type Props = VariantProps<typeof missionCard> & {
 
 export function MissionCard({
   name,
+  href,
   meta,
   actions,
   children,
@@ -51,11 +56,24 @@ export function MissionCard({
   return (
     <article className={cn(missionCard({ active, status, size }))}>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h3 className="font-medium text-foreground">{name}</h3>
+        <h3 className="font-medium text-foreground">
+          {href ? (
+            <Link
+              href={href}
+              className="outline-none after:absolute after:inset-0 after:rounded-xl"
+            >
+              {name}
+            </Link>
+          ) : (
+            name
+          )}
+        </h3>
         {meta && <p className="text-muted-foreground">{meta}</p>}
         {children}
       </div>
-      {actions && <div className="flex shrink-0 items-center">{actions}</div>}
+      {actions && (
+        <div className="relative flex shrink-0 items-center">{actions}</div>
+      )}
     </article>
   );
 }

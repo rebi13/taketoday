@@ -1,7 +1,7 @@
 "use client";
 
 import { ListPlus } from "lucide-react";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   describeCycle,
   describeSchedule,
@@ -21,20 +21,15 @@ import { MissionMenu } from "./mission-menu";
 import type { BoardTab, MissionBoardData } from "./types";
 
 // S11 내 미션 목록과 S15 기본 미션 둘러보기(S11 안의 탭, screen-flow ⑤).
-// 탭은 주소의 ?tab=browse와 맞춰 둔다(새로 고쳐도 같은 탭).
-export function MissionBoard({
-  board,
-  initialTab,
-}: {
-  board: MissionBoardData;
-  initialTab: BoardTab;
-}) {
-  const [tab, setTab] = useState<BoardTab>(initialTab);
+// 탭은 주소의 ?tab=browse로 정한다(새로 고쳐도 같은 탭). 카드를 누르면 S12 상세로 간다.
+export function MissionBoard({ board }: { board: MissionBoardData }) {
+  const searchParams = useSearchParams();
+  const tab: BoardTab =
+    searchParams.get("tab") === "browse" ? "browse" : "mine";
+  // history.replaceState는 Next 라우터와 맞물려 useSearchParams도 바뀐다
   const changeTab = (next: string) => {
-    const value: BoardTab = next === "browse" ? "browse" : "mine";
-    setTab(value);
     const url = new URL(window.location.href);
-    if (value === "browse") url.searchParams.set("tab", "browse");
+    if (next === "browse") url.searchParams.set("tab", "browse");
     else url.searchParams.delete("tab");
     window.history.replaceState(null, "", url);
   };
@@ -77,6 +72,7 @@ export function MissionBoard({
               size="compact"
               active={mission.active}
               name={mission.name}
+              href={`/missions/${mission.id}`}
               meta={mission.active ? describeSchedule(mission) : "꺼 둠"}
               actions={
                 <>

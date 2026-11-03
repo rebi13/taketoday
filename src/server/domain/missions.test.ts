@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   canEditMission,
   isCycleDays,
+  normalizeCheckCriteria,
   pickBrowsableTemplates,
+  planCriteriaChange,
 } from "./missions";
 
 describe("isCycleDays", () => {
@@ -56,5 +58,58 @@ describe("pickBrowsableTemplates", () => {
       { templateId: "desk-01", deletedAt: new Date() },
     ]);
     expect(picked.map((t) => t.id)).toEqual(["desk-01", "desk-02", "bath-01"]);
+  });
+});
+
+describe("normalizeCheckCriteria", () => {
+  it("줄바꿈과 연속 공백을 공백 하나로 줄인다", () => {
+    expect(
+      normalizeCheckCriteria("  수세미로\n세면대를   한 바퀴 닦으면 완료 ", 80),
+    ).toEqual({ ok: true, text: "수세미로 세면대를 한 바퀴 닦으면 완료" });
+  });
+
+  it("비어 있거나 길면 받지 않는다", () => {
+    expect(normalizeCheckCriteria(" \n ", 80)).toEqual({
+      ok: false,
+      reason: "empty",
+    });
+    expect(normalizeCheckCriteria("가".repeat(81), 80)).toEqual({
+      ok: false,
+      reason: "too-long",
+    });
+    expect(normalizeCheckCriteria("가".repeat(80), 80).ok).toBe(true);
+  });
+});
+
+describe("planCriteriaChange", () => {
+  const template = {
+    name: "세면대 닦기",
+    checkCriteria: "수세미로 세면대 테두리를 한 바퀴 닦으면 완료",
+    version: 3,
+  };
+
+  it("고친 기준은 user_modified로 표시한다", () => {
+    expect(
+      planCriteriaChange("물티슈로 수도꼭지만 닦으면 완료", template),
+    ).toEqual({
+      checkCriteria: "물티슈로 수도꼭지만 닦으면 완료",
+      userModified: true,
+    });
+  });
+
+  it("기본 기준과 같으면 다시 기본 미션을 따라가고 이름·버전을 맞춘다", () => {
+    expect(planCriteriaChange(template.checkCriteria, template)).toEqual({
+      checkCriteria: template.checkCriteria,
+      userModified: false,
+      name: "세면대 닦기",
+      templateVersion: 3,
+    });
+  });
+
+  it("직접 만든 미션은 기본 기준이 없어 항상 고친 것으로 둔다", () => {
+    expect(planCriteriaChange("5분 하면 완료", null)).toEqual({
+      checkCriteria: "5분 하면 완료",
+      userModified: true,
+    });
   });
 });

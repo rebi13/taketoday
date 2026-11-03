@@ -20,6 +20,11 @@ export {
 export {
   canEditMission,
   isCycleDays,
+  normalizeCheckCriteria,
   pickBrowsableTemplates,
+  planCriteriaChange,
+  type CriteriaPatch,
+  type CriteriaResult,
+  type CriteriaTemplate,
   type EditableMission,
 } from "./missions";
