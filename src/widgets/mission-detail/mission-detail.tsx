@@ -14,7 +14,7 @@ import {
 import type { MissionDetailData } from "./types";
 
 // S12 미션 상세: 완료 기준 · 주기 · 마지막 수행일(screen-flow "미션 관리").
-// 수정(S13)은 #17, 수행 이력은 완료 기록(M2) 뒤에 붙인다
+// 수정(S13)은 직접 만든 미션만. 수행 이력은 완료 기록(M2) 뒤에 붙인다
 export function MissionDetail({ mission }: { mission: MissionDetailData }) {
   return (
     // data-mission-detail: 좁은 화면에서 목록 대신 상세를 보이게 하는 표시(missions/layout)
@@ -66,7 +66,12 @@ export function MissionDetail({ mission }: { mission: MissionDetailData }) {
         </dd>
       </dl>
 
-      <div>
+      <div className="flex flex-wrap gap-2">
+        {!mission.fromTemplate && (
+          <Button asChild variant="outline">
+            <Link href={`/missions/${mission.id}/edit`}>수정</Link>
+          </Button>
+        )}
         <DeleteMissionButton mission={mission} />
       </div>
     </article>

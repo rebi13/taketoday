@@ -31,9 +31,12 @@ export {
 } from "./account";
 export {
   changeMissionCycle,
+  createMission,
   deleteMission,
   getMissionBoard,
   getMissionDetail,
+  getMissionEditor,
+  updateMission,
   resetCheckCriteria,
   updateCheckCriteria,
   setMissionsActive,
@@ -43,6 +46,9 @@ export {
   type CriteriaChangeResult,
   type MissionChangeResult,
   type MissionDetail,
+  type MissionEditor,
+  type MissionFormValues,
   type MissionZone,
+  type SaveMissionResult,
   type MyMission,
 } from "./missions";

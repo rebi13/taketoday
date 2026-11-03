@@ -34,7 +34,7 @@ export function ChangeCycleButton({
 export function DeleteMissionButton({
   mission,
 }: {
-  mission: Pick<MissionDetailData, "id" | "name" | "templateCriteria">;
+  mission: Pick<MissionDetailData, "id" | "name" | "fromTemplate">;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -45,7 +45,7 @@ export function DeleteMissionButton({
       <DeleteMissionDialog
         missionId={mission.id}
         name={mission.name}
-        fromTemplate={mission.templateCriteria !== null}
+        fromTemplate={mission.fromTemplate}
         open={open}
         onOpenChange={setOpen}
         backToList

@@ -9,6 +9,7 @@ export type MissionDetailData = {
   checkCriteria: string;
   userModified: boolean;
   active: boolean;
+  fromTemplate: boolean;
   templateCriteria: string | null;
   lastDoneDate: string | null;
 };

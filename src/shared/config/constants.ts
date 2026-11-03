@@ -63,3 +63,6 @@ export const MISSION_CYCLE_MAX_DAYS = 365;
 
 /** 미션 켜기·끄기를 한 번에 바꿀 수 있는 개수. 구역 하나의 미션이 이보다 많을 일은 없다 */
 export const MISSION_BATCH_MAX = 200;
+
+/** 기한형 미션의 마감은 오늘부터 이 날수 안으로 정한다. 그보다 먼 일은 주기형이 맞다 */
+export const MISSION_DUE_MAX_DAYS = 365;
