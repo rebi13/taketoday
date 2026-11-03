@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { CheckCriteriaField, MissionCard } from "@/entities/mission";
+import { AddToTodaySheet } from "@/features/add-to-today";
 import { CancelConfirmDialog } from "@/features/cancel-completion";
 import { OverdueMissionDialog } from "@/features/review-overdue-mission";
 import {
@@ -124,6 +125,35 @@ export function SelectableMissionCardSample() {
           <Button type="button">완료</Button>
         </div>
       }
+    />
+  );
+}
+
+export function AddToTodaySample() {
+  const [added, setAdded] = useState<string[]>([]);
+  const all = [
+    {
+      missionId: "a",
+      name: "현관 신발 정리하기",
+      zone: { id: "entrance", name: "현관", icon: "footprints" },
+      cycleDays: 3,
+      dueDate: null,
+    },
+    {
+      missionId: "b",
+      name: "주민세 내기",
+      zone: null,
+      cycleDays: null,
+      dueDate: "2026-11-07",
+    },
+  ];
+  return (
+    <AddToTodaySheet
+      addable={all.filter((m) => !added.includes(m.missionId))}
+      onAdd={(mission) => {
+        setAdded((list) => [...list, mission.missionId]);
+        toast(`‘${mission.name}’ 미션을 오늘 할 일에 넣었어요`);
+      }}
     />
   );
 }

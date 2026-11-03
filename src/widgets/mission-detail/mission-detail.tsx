@@ -11,11 +11,12 @@ import { Button } from "@/shared/ui/button";
 import {
   ChangeCycleButton,
   DeleteMissionButton,
+  DoneTodayButton,
 } from "./mission-detail-actions";
 import type { MissionDetailData } from "./types";
 
 // S12 미션 상세: 완료 기준 · 주기 · 마지막 수행일(screen-flow "미션 관리").
-// 수정(S13)은 직접 만든 미션만. 수행 이력은 완료 기록(M2) 뒤에 붙인다
+// 수정(S13)은 직접 만든 미션만. "오늘 했어요"로 추천 밖에서도 바로 완료한다
 export function MissionDetail({ mission }: { mission: MissionDetailData }) {
   return (
     // data-mission-detail: 좁은 화면에서 목록 대신 상세를 보이게 하는 표시(missions/layout)
@@ -50,6 +51,11 @@ export function MissionDetail({ mission }: { mission: MissionDetailData }) {
           />
         }
       />
+
+      {/* 추천에 없어도 오늘 한 일은 바로 남긴다. 적립 예정 n/10에 함께 잡힌다 */}
+      <div>
+        <DoneTodayButton mission={mission} />
+      </div>
 
       <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3">
         <dt className="text-sm text-muted-foreground">

@@ -12,4 +12,6 @@ export type MissionDetailData = {
   fromTemplate: boolean;
   templateCriteria: string | null;
   lastDoneDate: string | null;
+  today: string;
+  doneToday: boolean;
 };

@@ -207,7 +207,7 @@ export type PostponeMissionResult =
   { ok: true } | { ok: false; reason: "login" | "invalid" | "not-found" };
 
 /**
- * S10 내일로. 오늘 추천받은 미션 중 아직 하지 않은 것만. 다음 날 추천에서 먼저 나온다.
+ * S10 내일로. 오늘의 미션(추천·오늘 더 하기) 중 아직 하지 않은 것만. 다음 날 추천에서 먼저 나온다.
  * 재화나 기록에 불이익은 없다(기획서 6.3)
  */
 export async function postponeMission(
@@ -228,7 +228,6 @@ export async function postponeMission(
           eq(dailyMissions.userId, user.id),
           eq(dailyMissions.missionId, parsed.data.missionId),
           eq(dailyMissions.localDate, today),
-          eq(dailyMissions.recommended, true),
         ),
       );
     if (!daily) return { ok: false, reason: "not-found" } as const;
@@ -241,6 +240,76 @@ export async function postponeMission(
       .update(dailyMissions)
       .set({ status: "postponed" })
       .where(eq(dailyMissions.id, daily.id));
+    return { ok: true } as const;
+  });
+}
+
+export type TodayListResult =
+  { ok: true } | { ok: false; reason: "login" | "invalid" | "not-found" };
+
+/**
+ * S10 오늘 더 하기. 추천 밖의 켜진 내 미션을 오늘의 미션(recommended=false)으로 넣는다.
+ * 이미 오늘 목록에 있으면 그대로 성공
+ */
+export async function addToToday(input: unknown): Promise<TodayListResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, reason: "login" };
+  const parsed = missionInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const { missionId } = parsed.data;
+  const today = localDate();
+
+  return getDb().transaction(async (tx) => {
+    if (!(await canEditMine(tx, user.id, missionId))) {
+      return { ok: false, reason: "not-found" } as const;
+    }
+    await tx
+      .insert(dailyMissions)
+      .values({
+        userId: user.id,
+        missionId,
+        localDate: today,
+        recommended: false,
+      })
+      .onConflictDoNothing();
+    return { ok: true } as const;
+  });
+}
+
+/**
+ * S10 오늘 더 하기에서 넣은 것 빼기. 추천받은 것과 한 번이라도 완료한 것(취소 포함)은
+ * 기록이므로 빼지 않는다. 이미 없으면 그대로 성공
+ */
+export async function removeFromToday(
+  input: unknown,
+): Promise<TodayListResult> {
+  const user = await getSessionUser();
+  if (!user) return { ok: false, reason: "login" };
+  const parsed = missionInputSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "invalid" };
+  const today = localDate();
+
+  return getDb().transaction(async (tx) => {
+    const [daily] = await tx
+      .select({
+        id: dailyMissions.id,
+        recommended: dailyMissions.recommended,
+        completionId: completions.id,
+      })
+      .from(dailyMissions)
+      .leftJoin(completions, eq(completions.dailyMissionId, dailyMissions.id))
+      .where(
+        and(
+          eq(dailyMissions.userId, user.id),
+          eq(dailyMissions.missionId, parsed.data.missionId),
+          eq(dailyMissions.localDate, today),
+        ),
+      );
+    if (!daily) return { ok: true } as const;
+    if (daily.recommended || daily.completionId !== null) {
+      return { ok: false, reason: "invalid" } as const;
+    }
+    await tx.delete(dailyMissions).where(eq(dailyMissions.id, daily.id));
     return { ok: true } as const;
   });
 }

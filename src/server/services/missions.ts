@@ -325,6 +325,10 @@ export type MissionDetail = {
   templateCriteria: string | null;
   /** 마지막으로 완료한 날(localDate). 한 번도 안 했으면 null */
   lastDoneDate: string | null;
+  /** 서울 기준 오늘 */
+  today: string;
+  /** 오늘 완료했다(S12 오늘 했어요) */
+  doneToday: boolean;
 };
 
 const detailSchema = z.object({ missionId: z.uuid() });
@@ -337,6 +341,7 @@ export async function getMissionDetail(
   if (!user) return null;
   const parsed = detailSchema.safeParse(input);
   if (!parsed.success) return null;
+  const today = localDate();
 
   const [[row], lastDoneDate] = await Promise.all([
     getDb()
@@ -395,6 +400,8 @@ export async function getMissionDetail(
     fromTemplate: row.templateId !== null,
     templateCriteria: row.templateCriteria,
     lastDoneDate,
+    today,
+    doneToday: lastDoneDate === today,
   };
 }
 
