@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
+  dailyMissions,
   getDb,
   missionLists,
   missions,
@@ -325,6 +326,10 @@ export type MissionDetail = {
   templateCriteria: string | null;
   /** 마지막으로 완료한 날(localDate). 한 번도 안 했으면 null */
   lastDoneDate: string | null;
+  /** 서울 기준 오늘 */
+  today: string;
+  /** 오늘 완료했다(S12 오늘 했어요) */
+  doneToday: boolean;
 };
 
 const detailSchema = z.object({ missionId: z.uuid() });
@@ -337,6 +342,7 @@ export async function getMissionDetail(
   if (!user) return null;
   const parsed = detailSchema.safeParse(input);
   if (!parsed.success) return null;
+  const today = localDate();
 
   const [[row], lastDoneDate] = await Promise.all([
     getDb()
@@ -395,6 +401,8 @@ export async function getMissionDetail(
     fromTemplate: row.templateId !== null,
     templateCriteria: row.templateCriteria,
     lastDoneDate,
+    today,
+    doneToday: lastDoneDate === today,
   };
 }
 
@@ -686,11 +694,13 @@ async function zoneExists(tx: Tx, zoneId: string | null): Promise<boolean> {
 
 const createMissionSchema = missionFormSchema.extend({
   createdBy: z.enum(["user", "ai"]).default("user"),
+  /** 홈 "오늘 더 하기"에서 만들러 왔다: 만들면서 오늘 할 일에도 넣는다 */
+  addToToday: z.boolean().default(false),
 });
 
 /**
  * S13 직접 만들기. 내 리스트에 켠 채로 넣는다.
- * 한 트랜잭션: 구역 확인 → 리스트 확인(없으면 만듦) → 미션 쓰기
+ * 한 트랜잭션: 구역 확인 → 리스트 확인(없으면 만듦) → 미션 쓰기 → (원하면) 오늘의 미션 쓰기
  */
 export async function createMission(
   input: unknown,
@@ -712,6 +722,14 @@ export async function createMission(
       .insert(missions)
       .values({ ...values, listId: list.id, createdBy: parsed.data.createdBy })
       .returning({ id: missions.id });
+    if (parsed.data.addToToday) {
+      await tx.insert(dailyMissions).values({
+        userId: user.id,
+        missionId: created.id,
+        localDate: localDate(),
+        recommended: false,
+      });
+    }
     return { ok: true, missionId: created.id } as const;
   });
 }

@@ -50,6 +50,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { PendingRewardMeter } from "@/entities/wallet";
 import {
+  AddToTodaySample,
   CheckCriteriaFieldSample,
   RewardDialogsSample,
   SelectableMissionCardSample,
@@ -333,6 +334,10 @@ export function ComponentGallery() {
 
       <Section title="P08 · P03 · P04 · P07 (complete · cancel · review-overdue)">
         <RewardDialogsSample />
+      </Section>
+
+      <Section title="AddToTodaySheet (features/add-to-today)">
+        <AddToTodaySample />
       </Section>
 
       <Section title="Textarea">

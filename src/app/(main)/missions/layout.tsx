@@ -14,7 +14,8 @@ export default function MissionsLayout({ children }: LayoutProps<"/missions">) {
   // 상세가 열렸는지는 상세 화면의 data-mission-detail 표시로 CSS(:has)가 알아챈다.
   // Next는 떠난 화면을 지우지 않고 <Activity hidden>으로 숨겨 두는데(style="display: none"),
   // 숨은 상세까지 열린 것으로 치지 않도록 style에 display가 붙은 것은 뺀다.
-  // 주소를 읽는 훅을 쓰지 않아 정적 껍데기를 그대로 미리 그릴 수 있다
+  // 주소를 읽는 훅을 쓰지 않아 정적 껍데기를 그대로 미리 그릴 수 있다.
+  // 넓은 화면의 오른쪽 칸은 화면 높이 안에서 따로 스크롤한다(긴 만들기 화면도 끝까지 닿게)
   return (
     <main className="group/split flex flex-1 flex-col wide:grid wide:grid-cols-2 wide:items-start wide:gap-6 wide:px-4">
       <div className="flex flex-col gap-4 px-4 pt-4 pb-6 wide:px-0 max-wide:group-has-[[data-mission-detail]:not([style*=display])]/split:hidden">
@@ -31,7 +32,7 @@ export default function MissionsLayout({ children }: LayoutProps<"/missions">) {
           <Board />
         </Suspense>
       </div>
-      <div className="hidden flex-col px-4 pt-4 pb-6 has-[[data-mission-detail]:not([style*=display])]:flex wide:sticky wide:top-0 wide:flex wide:px-0">
+      <div className="hidden flex-col px-4 pt-4 pb-6 has-[[data-mission-detail]:not([style*=display])]:flex wide:sticky wide:top-0 wide:flex wide:max-h-dvh wide:overflow-y-auto wide:px-0">
         {children}
       </div>
     </main>

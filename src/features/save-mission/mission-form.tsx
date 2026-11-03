@@ -37,7 +37,11 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { saveMissionAction, type SaveMissionState } from "./actions";
+import {
+  addCreatedToTodayAction,
+  saveMissionAction,
+  type SaveMissionState,
+} from "./actions";
 import { NO_ZONE } from "./no-zone";
 import { useLeaveGuard } from "./use-leave-guard";
 
@@ -62,14 +66,20 @@ type Props = {
   mission: Mission | null;
   /** 서울 기준 오늘(마감일 고르는 범위) */
   today: string;
+  /** 홈 "오늘 더 하기"에서 만들러 왔다: 저장하면 오늘 할 일에도 넣고 홈으로 */
+  fromToday?: boolean;
 };
 
 /** 새로 만들 때 기본 주기. 기본 미션에서 가장 흔한 "일주일마다" */
 const DEFAULT_CYCLE_DAYS = 7;
 
-export function MissionForm({ zones, mission, today }: Props) {
+export function MissionForm({ zones, mission, today, fromToday }: Props) {
   const router = useRouter();
-  const backHref = mission ? `/missions/${mission.id}` : "/missions";
+  const backHref = mission
+    ? `/missions/${mission.id}`
+    : fromToday
+      ? "/"
+      : "/missions";
 
   const initial = {
     name: mission?.name ?? "",
@@ -109,7 +119,26 @@ export function MissionForm({ zones, mission, today }: Props) {
       const next = await saveMissionAction(previous, formData);
       if (next?.status === "saved") {
         reset();
-        toast.success("저장했어요");
+        if (next.action === "created-today") {
+          toast.success("만들어서 오늘 할 일에 넣었어요");
+        } else if (next.action === "created") {
+          // 만들자마자 오늘 하고 싶을 수 있어 T04에서 바로 넣을 수 있게 한다
+          const { missionId } = next;
+          toast.success("저장했어요", {
+            action: {
+              label: "오늘 할 일에 넣기",
+              onClick: async () => {
+                if (await addCreatedToTodayAction(missionId)) {
+                  toast("오늘 할 일에 넣었어요. 홈에서 볼 수 있어요");
+                } else {
+                  toast.error("넣지 못했어요. 잠시 뒤에 다시 해 주세요");
+                }
+              },
+            },
+          });
+        } else {
+          toast.success("저장했어요");
+        }
         router.push(next.href);
       }
       return next;
@@ -142,16 +171,22 @@ export function MissionForm({ zones, mission, today }: Props) {
           <Button asChild variant="ghost">
             <Link href={backHref}>
               <ChevronLeft aria-hidden data-icon="inline-start" />
-              {mission ? "상세로" : "내 미션"}
+              {mission ? "상세로" : fromToday ? "홈으로" : "내 미션"}
             </Link>
           </Button>
         </div>
         <h1 className="text-xl font-semibold">
           {mission ? "미션 수정" : "미션 만들기"}
         </h1>
+        {fromToday && (
+          <p className="text-sm text-muted-foreground">
+            저장하면 내 미션에 들어가고, 오늘 할 일에도 바로 넣어요.
+          </p>
+        )}
       </header>
 
       {mission && <input type="hidden" name="missionId" value={mission.id} />}
+      {fromToday && <input type="hidden" name="fromToday" value="1" />}
 
       <div className="flex flex-col gap-2">
         <label htmlFor="mission-name" className="font-medium">
@@ -261,7 +296,9 @@ export function MissionForm({ zones, mission, today }: Props) {
         onChange={setCriteria}
       />
 
-      <div className="flex flex-col gap-2">
+      {/* 저장 버튼은 화면 아래에 붙여 둔다(좁은 화면은 하단 탭바 위, 넓은 화면은 오른쪽 칸 아래).
+          긴 입력 화면에서 끝까지 스크롤하지 않아도 저장할 수 있게 */}
+      <div className="sticky bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] -mx-4 flex flex-col gap-2 border-t bg-background px-4 py-3 wide:bottom-0 wide:mx-0 wide:px-0">
         {state?.status === "error" && (
           <p role="alert" className="text-sm text-destructive">
             {state.message}

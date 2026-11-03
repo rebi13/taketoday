@@ -56,12 +56,16 @@ export {
   getTodayRecommendations,
   type DailyMissionStatus,
   type TodayMission,
+  type TodayMissionInfo,
   type TodayRecommendations,
 } from "./recommendations";
 export {
+  addToToday,
   cancelCompletion,
   completeMission,
   postponeMission,
+  removeFromToday,
+  type TodayListResult,
   type CancelCompletionResult,
   type CompleteMissionResult,
   type PostponeMissionResult,

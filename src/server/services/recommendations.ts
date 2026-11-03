@@ -28,8 +28,8 @@ import { getSessionUser } from "./session";
 
 export type DailyMissionStatus = "pending" | "done" | "postponed" | "canceled";
 
-export type TodayMission = {
-  dailyMissionId: string;
+/** 미션 자체의 정보(오늘 더 하기 목록에도 쓴다) */
+export type TodayMissionInfo = {
   missionId: string;
   name: string;
   zone: MissionZone | null;
@@ -41,6 +41,10 @@ export type TodayMission = {
   userModified: boolean;
   /** 기본 미션의 지금 기준. 직접 만든 미션이면 null(P25 되돌리기) */
   templateCriteria: string | null;
+};
+
+export type TodayMission = TodayMissionInfo & {
+  dailyMissionId: string;
   status: DailyMissionStatus;
 };
 
@@ -49,6 +53,10 @@ export type TodayRecommendations = {
   date: LocalDate;
   /** 추천 순서대로. 그사이 지웠거나 꺼 둔(아직 안 한) 미션은 빠진다 */
   missions: TodayMission[];
+  /** 추천 밖에서 오늘 넣었거나 직접 한 미션(오늘 더 하기, S12 오늘 했어요) */
+  extra: TodayMission[];
+  /** 오늘 더 하기로 고를 수 있는 켜진 내 미션(오늘 목록에 없는 것). 직접 만든 것(최근 순) → 기본 미션(구역 순) */
+  addable: TodayMissionInfo[];
   /** 오늘 적립 예정 수(상한까지). 추천 밖에서 한 완료도 센다 */
   pendingRewards: number;
 };
@@ -71,64 +79,138 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
       .returning({ userId: recommendationDays.userId });
     if (firstToday) await createRecommendations(tx, user.id, today);
 
-    const rows = await tx
-      .select({
-        dailyMissionId: dailyMissions.id,
-        missionId: missions.id,
-        name: missions.name,
-        kind: missions.kind,
-        cycleDays: missions.cycleDays,
-        dueDate: missions.dueDate,
-        checkCriteria: missions.checkCriteria,
-        userModified: missions.userModified,
-        templateCriteria: missionTemplates.checkCriteria,
-        status: dailyMissions.status,
-        zoneId: zones.id,
-        zoneName: zones.name,
-        zoneIcon: zones.icon,
-      })
-      .from(dailyMissions)
-      .innerJoin(missions, eq(missions.id, dailyMissions.missionId))
-      .leftJoin(zones, eq(zones.id, missions.zoneId))
-      .leftJoin(missionTemplates, eq(missionTemplates.id, missions.templateId))
-      .where(
-        and(
-          eq(dailyMissions.userId, user.id),
-          eq(dailyMissions.localDate, today),
-          isNotNull(dailyMissions.recommendRank),
-          isNull(missions.deletedAt),
-          // 그사이 꺼 둔 미션(P07 끝내기 포함)은 빠진다. 이미 하거나 취소한 것은 남긴다
-          or(
-            eq(missions.active, true),
-            inArray(dailyMissions.status, ["done", "canceled"]),
+    const missionColumns = {
+      missionId: missions.id,
+      name: missions.name,
+      kind: missions.kind,
+      cycleDays: missions.cycleDays,
+      dueDate: missions.dueDate,
+      checkCriteria: missions.checkCriteria,
+      userModified: missions.userModified,
+      templateCriteria: missionTemplates.checkCriteria,
+      zoneId: zones.id,
+      zoneName: zones.name,
+      zoneIcon: zones.icon,
+    };
+    const [rows, mine, done] = await Promise.all([
+      tx
+        .select({
+          ...missionColumns,
+          dailyMissionId: dailyMissions.id,
+          status: dailyMissions.status,
+          recommended: dailyMissions.recommended,
+        })
+        .from(dailyMissions)
+        .innerJoin(missions, eq(missions.id, dailyMissions.missionId))
+        .leftJoin(zones, eq(zones.id, missions.zoneId))
+        .leftJoin(
+          missionTemplates,
+          eq(missionTemplates.id, missions.templateId),
+        )
+        .where(
+          and(
+            eq(dailyMissions.userId, user.id),
+            eq(dailyMissions.localDate, today),
+            isNull(missions.deletedAt),
+            // 그사이 꺼 둔 미션(P07 끝내기 포함)은 빠진다. 이미 하거나 취소한 것은 남긴다
+            or(
+              eq(missions.active, true),
+              inArray(dailyMissions.status, ["done", "canceled"]),
+            ),
           ),
+        )
+        // 추천 순서 → 추천 밖에서 넣은 순서(null은 뒤로)
+        .orderBy(
+          asc(dailyMissions.recommendRank),
+          asc(dailyMissions.createdAt),
         ),
-      )
-      .orderBy(asc(dailyMissions.recommendRank));
+      // "오늘 더 하기"로 고를 수 있는 켜진 내 미션
+      tx
+        .select({
+          ...missionColumns,
+          templateId: missions.templateId,
+          createdAt: missions.createdAt,
+        })
+        .from(missions)
+        .innerJoin(missionLists, eq(missionLists.id, missions.listId))
+        .leftJoin(zones, eq(zones.id, missions.zoneId))
+        .leftJoin(
+          missionTemplates,
+          eq(missionTemplates.id, missions.templateId),
+        )
+        .where(
+          and(
+            eq(missionLists.ownerType, "user"),
+            eq(missionLists.ownerId, user.id),
+            isNull(missions.deletedAt),
+            eq(missions.active, true),
+          ),
+        )
+        .orderBy(asc(zones.sortOrder), asc(missions.createdAt)),
+      todayCompletions(tx, user.id, today),
+    ]);
 
+    const inToday = new Set(rows.map((row) => row.missionId));
+    const todayRows = rows.map((row) => ({
+      ...toMissionInfo(row),
+      dailyMissionId: row.dailyMissionId,
+      status: row.status,
+      recommended: row.recommended,
+    }));
     return {
       date: today,
-      missions: rows.map((row) => ({
-        dailyMissionId: row.dailyMissionId,
-        missionId: row.missionId,
-        name: row.name,
-        zone:
-          row.zoneId !== null && row.zoneName !== null && row.zoneIcon !== null
-            ? { id: row.zoneId, name: row.zoneName, icon: row.zoneIcon }
-            : null,
-        kind: row.kind,
-        cycleDays: row.cycleDays,
-        dueDate: row.dueDate,
-        checkCriteria: row.checkCriteria,
-        userModified: row.userModified,
-        templateCriteria: row.templateCriteria,
-        status: row.status,
-      })),
-      pendingRewards: countPendingRewards(
-        await todayCompletions(tx, user.id, today),
-      ),
+      missions: todayRows.filter((m) => m.recommended).map(withoutFlag),
+      extra: todayRows.filter((m) => !m.recommended).map(withoutFlag),
+      // 직접 만든 미션을 먼저(최근 만든 순), 그다음 기본 미션을 구역 순서대로
+      addable: [
+        ...mine
+          .filter((row) => row.templateId === null)
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+        ...mine.filter((row) => row.templateId !== null),
+      ]
+        .filter((row) => !inToday.has(row.missionId))
+        .map(toMissionInfo),
+      pendingRewards: countPendingRewards(done),
     };
   });
+}
+
+type MissionInfoRow = {
+  missionId: string;
+  name: string;
+  kind: "recurring" | "once";
+  cycleDays: number | null;
+  dueDate: string | null;
+  checkCriteria: string;
+  userModified: boolean;
+  templateCriteria: string | null;
+  zoneId: string | null;
+  zoneName: string | null;
+  zoneIcon: string | null;
+};
+
+function toMissionInfo(row: MissionInfoRow): TodayMissionInfo {
+  return {
+    missionId: row.missionId,
+    name: row.name,
+    zone:
+      row.zoneId !== null && row.zoneName !== null && row.zoneIcon !== null
+        ? { id: row.zoneId, name: row.zoneName, icon: row.zoneIcon }
+        : null,
+    kind: row.kind,
+    cycleDays: row.cycleDays,
+    dueDate: row.dueDate,
+    checkCriteria: row.checkCriteria,
+    userModified: row.userModified,
+    templateCriteria: row.templateCriteria,
+  };
+}
+
+function withoutFlag({
+  recommended: _recommended,
+  ...mission
+}: TodayMission & { recommended: boolean }): TodayMission {
+  return mission;
 }
 
 /** 내 미션과 기록으로 오늘의 추천을 골라 저장한다 */

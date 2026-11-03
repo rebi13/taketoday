@@ -18,6 +18,7 @@ import {
 } from "@/features/cancel-completion";
 import { useCompleteMission } from "@/features/complete-mission";
 import { EditCriteriaSheet } from "@/features/edit-check-criteria";
+import { AddToTodaySheet, useTodayList } from "@/features/add-to-today";
 import { usePostponeMission } from "@/features/postpone-mission";
 import { OverdueMissionDialog } from "@/features/review-overdue-mission";
 import { DAILY_PERSONAL_REWARD_CAP } from "@/shared/config/constants";
@@ -29,16 +30,20 @@ import type { TodayData, TodayMissionData } from "./types";
 // 되돌린(취소한) 미션은 같은 날 "다시 완료"할 수 있다(기획서 6.5).
 // 카드를 누르면 P01 완료 기준 보기, 거기서도 완료·내 기준으로 바꾸기를 할 수 있다.
 // 완료한 카드의 P01에는 "완료 취소"가 있다(P04로 한 번 묻는다).
-// 마감이 지난 기한형 미션은 카드의 "정리"로 P07을 연다(계속 · 끝내기 · 삭제)
+// 마감이 지난 기한형 미션은 카드의 "정리"로 P07을 연다(계속 · 끝내기 · 삭제).
+// 추천 말고도 "오늘 더 하기"로 내 미션을 넣어 할 수 있다(기획서 6.2). 넣은 것과
+// 미션 상세에서 직접 한 것은 "오늘 더 한 미션"에 모인다
 
 type Change =
   | { missionId: string; status: "done" | "postponed" | "canceled" }
   /** P07에서 끝내거나 지워 오늘 목록에서 빠진다 */
-  | { missionId: string; status: "left" };
+  | { missionId: string; status: "left" }
+  /** 오늘 더 하기로 넣었다 / 넣은 것을 뺐다 */
+  | { missionId: string; status: "added" | "removed" };
 
 /** 지금 상태에서 그 변경을 할 수 있는가. 완료는 아직 안 한 것만, 취소는 완료한 것만 */
 const ALLOWED: Record<
-  Exclude<Change["status"], "left">,
+  "done" | "postponed" | "canceled",
   TodayMissionData["status"][]
 > = {
   done: ["pending", "postponed", "canceled"],
@@ -50,25 +55,44 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
   const [state, apply] = useOptimistic(
     today,
     (current: TodayData, change: Change): TodayData => {
-      const target = current.missions.find(
-        (m) => m.missionId === change.missionId,
+      const { missionId } = change;
+      const others = <T extends { missionId: string }>(list: T[]) =>
+        list.filter((m) => m.missionId !== missionId);
+      if (change.status === "added") {
+        const info = current.addable.find((m) => m.missionId === missionId);
+        if (!info) return current;
+        return {
+          ...current,
+          extra: [...current.extra, { ...info, status: "pending" }],
+          addable: others(current.addable),
+        };
+      }
+      const target = [...current.missions, ...current.extra].find(
+        (m) => m.missionId === missionId,
       );
       if (!target) return current;
+      if (change.status === "removed") {
+        return {
+          ...current,
+          extra: others(current.extra),
+          addable: [...current.addable, target],
+        };
+      }
       if (change.status === "left") {
         return {
           ...current,
-          missions: current.missions.filter(
-            (m) => m.missionId !== change.missionId,
-          ),
+          missions: others(current.missions),
+          extra: others(current.extra),
         };
       }
       if (!ALLOWED[change.status].includes(target.status)) return current;
       const status = change.status;
+      const update = (list: TodayMissionData[]) =>
+        list.map((m) => (m.missionId === missionId ? { ...m, status } : m));
       return {
         ...current,
-        missions: current.missions.map((m) =>
-          m.missionId === change.missionId ? { ...m, status } : m,
-        ),
+        missions: update(current.missions),
+        extra: update(current.extra),
         // 정확한 수는 서버가 다시 센다(상한을 넘긴 완료는 세지 않는다). 먼저 어림해 둔다
         pendingRewards:
           status === "done"
@@ -102,15 +126,41 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
   const { postpone } = usePostponeMission((missionId) =>
     apply({ missionId, status: "postponed" }),
   );
-  const openedMission = state.missions.find((m) => m.missionId === opened);
-  const cancelTarget = state.missions.find(
-    (m) => m.missionId === confirmCancel,
-  );
-  const reviewTarget = state.missions.find((m) => m.missionId === reviewing);
+  const { add, remove } = useTodayList({
+    markAdded: (missionId) => apply({ missionId, status: "added" }),
+    markRemoved: (missionId) => apply({ missionId, status: "removed" }),
+  });
+  const all = [...state.missions, ...state.extra];
+  const openedMission = all.find((m) => m.missionId === opened);
+  const cancelTarget = all.find((m) => m.missionId === confirmCancel);
+  const reviewTarget = all.find((m) => m.missionId === reviewing);
   const overdue = (mission: TodayMissionData) =>
     mission.dueDate !== null &&
     mission.status !== "done" &&
     isPastDue(mission.dueDate, today.date);
+
+  const renderCard = (mission: TodayMissionData, extra = false) => (
+    <MissionCard
+      status={mission.status}
+      name={mission.name}
+      onSelect={() => setOpened(mission.missionId)}
+      meta={<Meta mission={mission} overdue={overdue(mission)} />}
+      actions={
+        <CardActions
+          mission={mission}
+          overdue={overdue(mission)}
+          onComplete={() => complete(mission.missionId)}
+          // 넣은 것은 "빼기", 추천받은 것은 "내일로"
+          secondary={
+            extra
+              ? { label: "빼기", onClick: () => remove(mission.missionId) }
+              : { label: "내일로", onClick: () => postpone(mission.missionId) }
+          }
+          onReview={() => setReviewing(mission.missionId)}
+        />
+      }
+    />
+  );
 
   return (
     <section aria-label="오늘의 추천" className="flex flex-col gap-4">
@@ -120,36 +170,29 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
       {state.missions.length === 0 ? (
         <NoRecommendations />
       ) : (
-        <ul className="grid gap-3">
-          {state.missions.map((mission) => (
-            <li
-              key={mission.missionId}
-              // 방금 완료한 카드만 살짝 커졌다 돌아온다. 움직임 줄이기 설정이면 0ms
-              className={
-                justDone === mission.missionId && mission.status === "done"
-                  ? "grid animate-in duration-(--duration-reward) zoom-in-95"
-                  : "grid"
-              }
-            >
-              <MissionCard
-                status={mission.status}
-                name={mission.name}
-                onSelect={() => setOpened(mission.missionId)}
-                meta={<Meta mission={mission} overdue={overdue(mission)} />}
-                actions={
-                  <CardActions
-                    mission={mission}
-                    overdue={overdue(mission)}
-                    onComplete={() => complete(mission.missionId)}
-                    onPostpone={() => postpone(mission.missionId)}
-                    onReview={() => setReviewing(mission.missionId)}
-                  />
-                }
-              />
-            </li>
-          ))}
-        </ul>
+        <MissionList
+          missions={state.missions}
+          justDone={justDone}
+          render={(mission) => renderCard(mission)}
+        />
       )}
+
+      {state.extra.length > 0 && (
+        <>
+          <h2 className="text-lg font-semibold">오늘 더 한 미션</h2>
+          <MissionList
+            missions={state.extra}
+            justDone={justDone}
+            render={(mission) => renderCard(mission, true)}
+          />
+        </>
+      )}
+      <div>
+        <AddToTodaySheet
+          addable={state.addable}
+          onAdd={(mission) => add(mission.missionId, mission.name)}
+        />
+      </div>
 
       {openedMission && (
         <CheckCriteriaDialog
@@ -236,18 +279,47 @@ function Meta({
   );
 }
 
+/** 카드 목록. 방금 완료한 카드만 살짝 커졌다 돌아온다(P02, 움직임 줄이기면 0ms) */
+function MissionList({
+  missions,
+  justDone,
+  render,
+}: {
+  missions: TodayMissionData[];
+  justDone: string | null;
+  render: (mission: TodayMissionData) => React.ReactNode;
+}) {
+  return (
+    <ul className="grid gap-3">
+      {missions.map((mission) => (
+        <li
+          key={mission.missionId}
+          className={
+            justDone === mission.missionId && mission.status === "done"
+              ? "grid animate-in duration-(--duration-reward) zoom-in-95"
+              : "grid"
+          }
+        >
+          {render(mission)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function CardActions({
   mission,
   overdue,
   onComplete,
-  onPostpone,
+  secondary,
   onReview,
 }: {
   mission: TodayMissionData;
-  /** 마감이 지난 기한형: 내일로 대신 P07 "정리" */
+  /** 마감이 지난 기한형: 내일로·빼기 대신 P07 "정리" */
   overdue: boolean;
   onComplete: () => void;
-  onPostpone: () => void;
+  /** 아직 안 한 카드의 보조 동작(추천: 내일로, 오늘 더 하기: 빼기) */
+  secondary: { label: string; onClick: () => void };
   onReview: () => void;
 }) {
   if (overdue && mission.status !== "canceled") {
@@ -285,8 +357,8 @@ function CardActions({
     case "pending":
       return (
         <div className="flex gap-1">
-          <Button type="button" variant="ghost" onClick={onPostpone}>
-            내일로
+          <Button type="button" variant="ghost" onClick={secondary.onClick}>
+            {secondary.label}
           </Button>
           <Button type="button" onClick={onComplete}>
             완료
