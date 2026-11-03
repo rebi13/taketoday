@@ -51,6 +51,11 @@ export function weekdayOf(date: LocalDate): number {
   return toUtcDate(date).getUTCDay();
 }
 
+/** 월. 1 = 1월 … 12 = 12월 (계절 판정용) */
+export function monthOf(date: LocalDate): number {
+  return toUtcDate(date).getUTCMonth() + 1;
+}
+
 // 날짜 문자열만 계산할 때는 시간대가 끼어들지 않게 UTC 자정으로 다룬다
 function toUtcDate(date: LocalDate): Date {
   const m = LOCAL_DATE_PATTERN.exec(date);

@@ -66,3 +66,6 @@ export const MISSION_BATCH_MAX = 200;
 
 /** 기한형 미션의 마감은 오늘부터 이 날수 안으로 정한다. 그보다 먼 일은 주기형이 맞다 */
 export const MISSION_DUE_MAX_DAYS = 365;
+
+/** 기한형 미션은 마감 이 날수 전부터 추천 후보가 된다(기획서 15.1) */
+export const MISSION_DUE_LEAD_DAYS = 3;

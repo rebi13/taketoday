@@ -4,6 +4,7 @@ import {
   diffDays,
   localDate,
   localDateSchema,
+  monthOf,
   weekdayOf,
 } from "./date";
 
@@ -99,5 +100,12 @@ describe("localDateSchema", () => {
     expect(localDateSchema.safeParse("2026-02-30").success).toBe(false);
     expect(localDateSchema.safeParse("2027-02-29").success).toBe(false);
     expect(localDateSchema.safeParse("2026-11-01T00:00").success).toBe(false);
+  });
+});
+
+describe("monthOf", () => {
+  it("1 = 1월, 12 = 12월", () => {
+    expect(monthOf("2026-01-31")).toBe(1);
+    expect(monthOf("2026-12-01")).toBe(12);
   });
 });
