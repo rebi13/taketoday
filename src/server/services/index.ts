@@ -52,3 +52,9 @@ export {
   type SaveMissionResult,
   type MyMission,
 } from "./missions";
+export {
+  getTodayRecommendations,
+  type DailyMissionStatus,
+  type TodayMission,
+  type TodayRecommendations,
+} from "./recommendations";

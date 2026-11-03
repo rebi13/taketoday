@@ -2,6 +2,7 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import {
   CheckCriteriaBox,
+  describeDate,
   describeSchedule,
   ZoneBadge,
 } from "@/entities/mission";
@@ -60,7 +61,9 @@ export function MissionDetail({ mission }: { mission: MissionDetailData }) {
         </dd>
         <dt className="text-sm text-muted-foreground">마지막으로 한 날</dt>
         <dd>
-          {mission.lastDoneDate ?? (
+          {mission.lastDoneDate ? (
+            describeDate(mission.lastDoneDate)
+          ) : (
             <span className="text-muted-foreground">아직 기록이 없어요</span>
           )}
         </dd>

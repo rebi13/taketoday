@@ -26,6 +26,7 @@ import {
 } from "@/shared/config/constants";
 import { localDate } from "@/shared/lib/date";
 import { ensurePersonalList, type Tx } from "./lists";
+import { lastDoneDateOf } from "./recommendations";
 import { getSessionUser } from "./session";
 
 // S11 내 미션 목록과 S15 기본 미션 둘러보기(#15), S12 상세와 완료 기준 바꾸기(#16),
@@ -322,7 +323,7 @@ export type MissionDetail = {
   fromTemplate: boolean;
   /** 기본 미션의 지금 기준. 직접 만든 미션이면 null. "기본 기준으로 되돌리기"에 쓴다 */
   templateCriteria: string | null;
-  /** 마지막으로 완료한 날(localDate). 완료 기록(M2, #19)이 생기기 전까지 null */
+  /** 마지막으로 완료한 날(localDate). 한 번도 안 했으면 null */
   lastDoneDate: string | null;
 };
 
@@ -337,30 +338,34 @@ export async function getMissionDetail(
   const parsed = detailSchema.safeParse(input);
   if (!parsed.success) return null;
 
-  const [row] = await getDb()
-    .select({
-      id: missions.id,
-      name: missions.name,
-      kind: missions.kind,
-      cycleDays: missions.cycleDays,
-      dueDate: missions.dueDate,
-      checkCriteria: missions.checkCriteria,
-      userModified: missions.userModified,
-      active: missions.active,
-      deletedAt: missions.deletedAt,
-      ownerType: missionLists.ownerType,
-      ownerId: missionLists.ownerId,
-      zoneId: zones.id,
-      zoneName: zones.name,
-      zoneIcon: zones.icon,
-      templateId: missions.templateId,
-      templateCriteria: missionTemplates.checkCriteria,
-    })
-    .from(missions)
-    .innerJoin(missionLists, eq(missionLists.id, missions.listId))
-    .leftJoin(zones, eq(zones.id, missions.zoneId))
-    .leftJoin(missionTemplates, eq(missionTemplates.id, missions.templateId))
-    .where(eq(missions.id, parsed.data.missionId));
+  const [[row], lastDoneDate] = await Promise.all([
+    getDb()
+      .select({
+        id: missions.id,
+        name: missions.name,
+        kind: missions.kind,
+        cycleDays: missions.cycleDays,
+        dueDate: missions.dueDate,
+        checkCriteria: missions.checkCriteria,
+        userModified: missions.userModified,
+        active: missions.active,
+        deletedAt: missions.deletedAt,
+        ownerType: missionLists.ownerType,
+        ownerId: missionLists.ownerId,
+        zoneId: zones.id,
+        zoneName: zones.name,
+        zoneIcon: zones.icon,
+        templateId: missions.templateId,
+        templateCriteria: missionTemplates.checkCriteria,
+      })
+      .from(missions)
+      .innerJoin(missionLists, eq(missionLists.id, missions.listId))
+      .leftJoin(zones, eq(zones.id, missions.zoneId))
+      .leftJoin(missionTemplates, eq(missionTemplates.id, missions.templateId))
+      .where(eq(missions.id, parsed.data.missionId)),
+    // 남의 미션이면 아래에서 null을 돌려주므로 내 기록만 본다
+    lastDoneDateOf(getDb(), user.id, parsed.data.missionId),
+  ]);
   if (
     !row ||
     !canEditMission(
@@ -389,7 +394,7 @@ export async function getMissionDetail(
     active: row.active,
     fromTemplate: row.templateId !== null,
     templateCriteria: row.templateCriteria,
-    lastDoneDate: null,
+    lastDoneDate,
   };
 }
 
