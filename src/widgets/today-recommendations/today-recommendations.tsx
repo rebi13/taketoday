@@ -10,6 +10,10 @@ import {
   ZoneBadge,
 } from "@/entities/mission";
 import { PendingRewardMeter } from "@/entities/wallet";
+import {
+  CancelConfirmDialog,
+  useCancelCompletion,
+} from "@/features/cancel-completion";
 import { useCompleteMission } from "@/features/complete-mission";
 import { EditCriteriaSheet } from "@/features/edit-check-criteria";
 import { usePostponeMission } from "@/features/postpone-mission";
@@ -18,10 +22,22 @@ import { Button } from "@/shared/ui/button";
 import type { TodayData, TodayMissionData } from "./types";
 
 // S10 홈의 오늘의 추천과 적립 예정 n/10(screen-flow "하루 흐름").
-// 완료·내일로는 서버 응답을 기다리지 않고 먼저 표시한다(useOptimistic, ADR 0009).
-// 카드를 누르면 P01 완료 기준 보기, 거기서도 완료·내 기준으로 바꾸기를 할 수 있다
+// 완료·내일로·되돌리기는 서버 응답을 기다리지 않고 먼저 표시한다(useOptimistic, ADR 0009).
+// 되돌린(취소한) 미션은 같은 날 "다시 완료"할 수 있다(기획서 6.5).
+// 카드를 누르면 P01 완료 기준 보기, 거기서도 완료·내 기준으로 바꾸기를 할 수 있다.
+// 완료한 카드의 P01에는 "완료 취소"가 있다(P04로 한 번 묻는다)
 
-type Change = { missionId: string; status: "done" | "postponed" };
+type Change = {
+  missionId: string;
+  status: "done" | "postponed" | "canceled";
+};
+
+/** 지금 상태에서 그 변경을 할 수 있는가. 완료는 아직 안 한 것만, 취소는 완료한 것만 */
+const ALLOWED: Record<Change["status"], TodayMissionData["status"][]> = {
+  done: ["pending", "postponed", "canceled"],
+  postponed: ["pending"],
+  canceled: ["done"],
+};
 
 export function TodayRecommendations({ today }: { today: TodayData }) {
   const [state, apply] = useOptimistic(
@@ -30,7 +46,9 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
       const target = current.missions.find(
         (m) => m.missionId === change.missionId,
       );
-      if (!target || target.status === "done") return current;
+      if (!target || !ALLOWED[change.status].includes(target.status)) {
+        return current;
+      }
       return {
         ...current,
         missions: current.missions.map((m) =>
@@ -38,26 +56,41 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
             ? { ...m, status: change.status }
             : m,
         ),
-        // 정확한 수는 서버가 다시 센다. 상한까지만 먼저 올려 둔다
+        // 정확한 수는 서버가 다시 센다(상한을 넘긴 완료는 세지 않는다). 먼저 어림해 둔다
         pendingRewards:
           change.status === "done"
             ? Math.min(current.pendingRewards + 1, DAILY_PERSONAL_REWARD_CAP)
-            : current.pendingRewards,
+            : change.status === "canceled"
+              ? Math.max(current.pendingRewards - 1, 0)
+              : current.pendingRewards,
       };
     },
   );
   /** 방금 완료한 카드(P02 짧은 연출) */
   const [justDone, setJustDone] = useState<string | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
+  /** P04로 취소를 묻고 있는 미션 */
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
 
-  const { complete, dialogs } = useCompleteMission((missionId) => {
-    apply({ missionId, status: "done" });
-    setJustDone(missionId);
+  const { cancel } = useCancelCompletion((missionId) => {
+    apply({ missionId, status: "canceled" });
+    setJustDone(null);
+  });
+  const { complete, dialogs } = useCompleteMission({
+    date: today.date,
+    markDone: (missionId) => {
+      apply({ missionId, status: "done" });
+      setJustDone(missionId);
+    },
+    onUndo: (missionId) => cancel(missionId, today.date),
   });
   const { postpone } = usePostponeMission((missionId) =>
     apply({ missionId, status: "postponed" }),
   );
   const openedMission = state.missions.find((m) => m.missionId === opened);
+  const cancelTarget = state.missions.find(
+    (m) => m.missionId === confirmCancel,
+  );
 
   return (
     <section aria-label="오늘의 추천" className="flex flex-col gap-4">
@@ -111,7 +144,19 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
             />
           }
           actions={
-            openedMission.status === "done" ? undefined : (
+            openedMission.status === "done" ? (
+              // 완료 알림(T01)을 놓쳐도 그날 안에는 여기서 취소한다. P04로 한 번 묻는다
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setOpened(null);
+                  setConfirmCancel(openedMission.missionId);
+                }}
+              >
+                완료 취소
+              </Button>
+            ) : (
               <Button
                 type="button"
                 onClick={() => {
@@ -119,12 +164,20 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
                   complete(openedMission.missionId);
                 }}
               >
-                완료
+                {openedMission.status === "canceled" ? "다시 완료" : "완료"}
               </Button>
             )
           }
         />
       )}
+      <CancelConfirmDialog
+        name={cancelTarget?.name ?? ""}
+        open={cancelTarget !== undefined}
+        onOpenChange={(open) => !open && setConfirmCancel(null)}
+        onConfirm={() => {
+          if (cancelTarget) cancel(cancelTarget.missionId, today.date);
+        }}
+      />
       {dialogs}
     </section>
   );
@@ -136,7 +189,9 @@ function Meta({ mission }: { mission: TodayMissionData }) {
       <ZoneBadge zone={mission.zone} />
       {mission.status === "postponed"
         ? "내일 다시 추천할게요"
-        : describeSchedule(mission)}
+        : mission.status === "canceled"
+          ? "완료를 취소했어요. 오늘 안에 다시 할 수 있어요"
+          : describeSchedule(mission)}
     </span>
   );
 }

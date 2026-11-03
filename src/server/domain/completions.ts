@@ -1,5 +1,6 @@
 import "server-only";
 import { DAILY_PERSONAL_REWARD_CAP } from "@/shared/config/constants";
+import type { LocalDate } from "@/shared/lib/date";
 
 // 완료와 적립 예정(기획서 6.2, ADR 0003, 구현 계획 5.1·5.3).
 // 보상은 다음 날 정산한다. 그날의 "적립 예정"은 정산과 같은 규칙으로 센다:
@@ -36,4 +37,12 @@ export function planCompletionReward(
     counted: pendingRewards > previous,
     reachedCap: previous < cap && pendingRewards === cap,
   };
+}
+
+/**
+ * 그날의 완료를 취소하거나 다시 완료할 수 있는가(기획서 6.5).
+ * 완료한 날(서울 기준) 안에서만. 자정이 지나면 그날은 정산되어 확정된다
+ */
+export function isChangeableDay(day: LocalDate, today: LocalDate): boolean {
+  return day === today;
 }

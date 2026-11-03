@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { countPendingRewards, planCompletionReward } from "./completions";
+import { localDate } from "@/shared/lib/date";
+import {
+  countPendingRewards,
+  isChangeableDay,
+  planCompletionReward,
+} from "./completions";
 
 const done = (missionId: string) => ({ missionId, canceledAt: null });
 const canceled = (missionId: string) => ({
@@ -60,5 +65,30 @@ describe("planCompletionReward", () => {
       counted: true,
       reachedCap: false,
     });
+  });
+});
+
+describe("isChangeableDay: 취소·다시 완료는 그날 안에서만", () => {
+  // 서울 2026-11-03 23:59:59에 완료했다
+  const doneDay = localDate(new Date("2026-11-03T14:59:59.000Z"));
+
+  it("같은 날 자정 전이면 된다", () => {
+    const now = localDate(new Date("2026-11-03T14:59:59.999Z"));
+    expect(isChangeableDay(doneDay, now)).toBe(true);
+  });
+
+  it("자정이 지나면(서울 00:00) 어제 완료는 취소·다시 완료할 수 없다", () => {
+    const now = localDate(new Date("2026-11-03T15:00:00.000Z"));
+    expect(now).toBe("2026-11-04");
+    expect(isChangeableDay(doneDay, now)).toBe(false);
+  });
+
+  it("완료 → 취소 → 다시 완료는 적립 예정 1건이다", () => {
+    const cancel = planCompletionReward([], done("a"));
+    expect(cancel.pendingRewards).toBe(1);
+    expect(
+      planCompletionReward([canceled("a")], done("a")).pendingRewards,
+    ).toBe(1);
+    expect(countPendingRewards([canceled("a"), done("a")])).toBe(1);
   });
 });
