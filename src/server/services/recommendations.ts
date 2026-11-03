@@ -55,7 +55,7 @@ export type TodayRecommendations = {
   missions: TodayMission[];
   /** 추천 밖에서 오늘 넣었거나 직접 한 미션(오늘 더 하기, S12 오늘 했어요) */
   extra: TodayMission[];
-  /** 오늘 더 하기로 고를 수 있는 켜진 내 미션(오늘 목록에 없는 것), 구역 순서 */
+  /** 오늘 더 하기로 고를 수 있는 켜진 내 미션(오늘 목록에 없는 것). 직접 만든 것(최근 순) → 기본 미션(구역 순) */
   addable: TodayMissionInfo[];
   /** 오늘 적립 예정 수(상한까지). 추천 밖에서 한 완료도 센다 */
   pendingRewards: number;
@@ -126,7 +126,11 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
         ),
       // "오늘 더 하기"로 고를 수 있는 켜진 내 미션
       tx
-        .select(missionColumns)
+        .select({
+          ...missionColumns,
+          templateId: missions.templateId,
+          createdAt: missions.createdAt,
+        })
         .from(missions)
         .innerJoin(missionLists, eq(missionLists.id, missions.listId))
         .leftJoin(zones, eq(zones.id, missions.zoneId))
@@ -157,7 +161,13 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
       date: today,
       missions: todayRows.filter((m) => m.recommended).map(withoutFlag),
       extra: todayRows.filter((m) => !m.recommended).map(withoutFlag),
-      addable: mine
+      // 직접 만든 미션을 먼저(최근 만든 순), 그다음 기본 미션을 구역 순서대로
+      addable: [
+        ...mine
+          .filter((row) => row.templateId === null)
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+        ...mine.filter((row) => row.templateId !== null),
+      ]
         .filter((row) => !inToday.has(row.missionId))
         .map(toMissionInfo),
       pendingRewards: countPendingRewards(done),

@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { describeSchedule, ZoneBadge } from "@/entities/mission";
 import { Button } from "@/shared/ui/button";
@@ -14,7 +15,8 @@ import {
 } from "@/shared/ui/sheet";
 
 // S10 오늘 더 하기: 켜진 내 미션 중 오늘 목록에 없는 것을 골라 넣는다.
-// 넣은 것은 목록에서 빠지므로 여러 개를 이어서 넣을 수 있다
+// 넣은 것은 목록에서 빠지므로 여러 개를 이어서 넣을 수 있다.
+// 목록에 없으면 새로 만들어 바로 넣는다(S13 ?from=today). 직접 만든 미션이 맨 위에 온다
 type Addable = {
   missionId: string;
   name: string;
@@ -48,6 +50,14 @@ export function AddToTodaySheet({
               모여요.
             </SheetDescription>
           </SheetHeader>
+          <Button asChild variant="outline">
+            <Link
+              href="/missions/new?from=today"
+              onClick={() => setOpen(false)}
+            >
+              <Plus aria-hidden data-icon="inline-start" />새 미션 만들어 넣기
+            </Link>
+          </Button>
           {addable.length === 0 ? (
             <p className="rounded-xl bg-muted px-4 py-6 text-center text-muted-foreground">
               켜진 미션을 모두 오늘 할 일에 넣었어요.
