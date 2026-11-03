@@ -66,3 +66,10 @@ export {
   type CompleteMissionResult,
   type PostponeMissionResult,
 } from "./completions";
+export {
+  getRecords,
+  type RecordDay,
+  type RecordEntry,
+  type Records,
+  type ZoneLastDone,
+} from "./records";

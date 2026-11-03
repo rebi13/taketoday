@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useOptimistic, useState } from "react";
 import {
   CheckCriteriaDialog,
+  describeDate,
   describeSchedule,
+  isPastDue,
   MissionCard,
   ZoneBadge,
 } from "@/entities/mission";
@@ -17,6 +19,7 @@ import {
 import { useCompleteMission } from "@/features/complete-mission";
 import { EditCriteriaSheet } from "@/features/edit-check-criteria";
 import { usePostponeMission } from "@/features/postpone-mission";
+import { OverdueMissionDialog } from "@/features/review-overdue-mission";
 import { DAILY_PERSONAL_REWARD_CAP } from "@/shared/config/constants";
 import { Button } from "@/shared/ui/button";
 import type { TodayData, TodayMissionData } from "./types";
@@ -25,15 +28,19 @@ import type { TodayData, TodayMissionData } from "./types";
 // 완료·내일로·되돌리기는 서버 응답을 기다리지 않고 먼저 표시한다(useOptimistic, ADR 0009).
 // 되돌린(취소한) 미션은 같은 날 "다시 완료"할 수 있다(기획서 6.5).
 // 카드를 누르면 P01 완료 기준 보기, 거기서도 완료·내 기준으로 바꾸기를 할 수 있다.
-// 완료한 카드의 P01에는 "완료 취소"가 있다(P04로 한 번 묻는다)
+// 완료한 카드의 P01에는 "완료 취소"가 있다(P04로 한 번 묻는다).
+// 마감이 지난 기한형 미션은 카드의 "정리"로 P07을 연다(계속 · 끝내기 · 삭제)
 
-type Change = {
-  missionId: string;
-  status: "done" | "postponed" | "canceled";
-};
+type Change =
+  | { missionId: string; status: "done" | "postponed" | "canceled" }
+  /** P07에서 끝내거나 지워 오늘 목록에서 빠진다 */
+  | { missionId: string; status: "left" };
 
 /** 지금 상태에서 그 변경을 할 수 있는가. 완료는 아직 안 한 것만, 취소는 완료한 것만 */
-const ALLOWED: Record<Change["status"], TodayMissionData["status"][]> = {
+const ALLOWED: Record<
+  Exclude<Change["status"], "left">,
+  TodayMissionData["status"][]
+> = {
   done: ["pending", "postponed", "canceled"],
   postponed: ["pending"],
   canceled: ["done"],
@@ -46,21 +53,27 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
       const target = current.missions.find(
         (m) => m.missionId === change.missionId,
       );
-      if (!target || !ALLOWED[change.status].includes(target.status)) {
-        return current;
+      if (!target) return current;
+      if (change.status === "left") {
+        return {
+          ...current,
+          missions: current.missions.filter(
+            (m) => m.missionId !== change.missionId,
+          ),
+        };
       }
+      if (!ALLOWED[change.status].includes(target.status)) return current;
+      const status = change.status;
       return {
         ...current,
         missions: current.missions.map((m) =>
-          m.missionId === change.missionId
-            ? { ...m, status: change.status }
-            : m,
+          m.missionId === change.missionId ? { ...m, status } : m,
         ),
         // 정확한 수는 서버가 다시 센다(상한을 넘긴 완료는 세지 않는다). 먼저 어림해 둔다
         pendingRewards:
-          change.status === "done"
+          status === "done"
             ? Math.min(current.pendingRewards + 1, DAILY_PERSONAL_REWARD_CAP)
-            : change.status === "canceled"
+            : status === "canceled"
               ? Math.max(current.pendingRewards - 1, 0)
               : current.pendingRewards,
       };
@@ -71,6 +84,8 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
   const [opened, setOpened] = useState<string | null>(null);
   /** P04로 취소를 묻고 있는 미션 */
   const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+  /** P07로 계속할지 묻고 있는 기한 지난 미션 */
+  const [reviewing, setReviewing] = useState<string | null>(null);
 
   const { cancel } = useCancelCompletion((missionId) => {
     apply({ missionId, status: "canceled" });
@@ -91,6 +106,11 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
   const cancelTarget = state.missions.find(
     (m) => m.missionId === confirmCancel,
   );
+  const reviewTarget = state.missions.find((m) => m.missionId === reviewing);
+  const overdue = (mission: TodayMissionData) =>
+    mission.dueDate !== null &&
+    mission.status !== "done" &&
+    isPastDue(mission.dueDate, today.date);
 
   return (
     <section aria-label="오늘의 추천" className="flex flex-col gap-4">
@@ -115,12 +135,14 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
                 status={mission.status}
                 name={mission.name}
                 onSelect={() => setOpened(mission.missionId)}
-                meta={<Meta mission={mission} />}
+                meta={<Meta mission={mission} overdue={overdue(mission)} />}
                 actions={
                   <CardActions
                     mission={mission}
+                    overdue={overdue(mission)}
                     onComplete={() => complete(mission.missionId)}
                     onPostpone={() => postpone(mission.missionId)}
+                    onReview={() => setReviewing(mission.missionId)}
                   />
                 }
               />
@@ -178,12 +200,28 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
           if (cancelTarget) cancel(cancelTarget.missionId, today.date);
         }}
       />
+      {reviewTarget?.dueDate && (
+        <OverdueMissionDialog
+          open
+          onOpenChange={(open) => !open && setReviewing(null)}
+          missionId={reviewTarget.missionId}
+          name={reviewTarget.name}
+          dueLabel={describeDate(reviewTarget.dueDate)}
+          onLeave={(missionId) => apply({ missionId, status: "left" })}
+        />
+      )}
       {dialogs}
     </section>
   );
 }
 
-function Meta({ mission }: { mission: TodayMissionData }) {
+function Meta({
+  mission,
+  overdue,
+}: {
+  mission: TodayMissionData;
+  overdue: boolean;
+}) {
   return (
     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
       <ZoneBadge zone={mission.zone} />
@@ -191,20 +229,39 @@ function Meta({ mission }: { mission: TodayMissionData }) {
         ? "내일 다시 추천할게요"
         : mission.status === "canceled"
           ? "완료를 취소했어요. 오늘 안에 다시 할 수 있어요"
-          : describeSchedule(mission)}
+          : overdue
+            ? `${describeSchedule(mission)} · 기한이 지났어요`
+            : describeSchedule(mission)}
     </span>
   );
 }
 
 function CardActions({
   mission,
+  overdue,
   onComplete,
   onPostpone,
+  onReview,
 }: {
   mission: TodayMissionData;
+  /** 마감이 지난 기한형: 내일로 대신 P07 "정리" */
+  overdue: boolean;
   onComplete: () => void;
   onPostpone: () => void;
+  onReview: () => void;
 }) {
+  if (overdue && mission.status !== "canceled") {
+    return (
+      <div className="flex gap-1">
+        <Button type="button" variant="ghost" onClick={onReview}>
+          정리
+        </Button>
+        <Button type="button" onClick={onComplete}>
+          완료
+        </Button>
+      </div>
+    );
+  }
   switch (mission.status) {
     case "done":
       return (
