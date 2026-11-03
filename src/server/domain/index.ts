@@ -31,3 +31,11 @@ export {
   type CriteriaTemplate,
   type EditableMission,
 } from "./missions";
+export {
+  overdueRatio,
+  pickRecommendations,
+  seasonOf,
+  type MissionHistoryEntry,
+  type RecommendableMission,
+  type Season,
+} from "./recommendations";
