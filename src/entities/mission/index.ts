@@ -4,7 +4,10 @@ export { MissionCard } from "./mission-card";
 export {
   describeCycle,
   describeDate,
+  describeDay,
+  describeDaysAgo,
   describeDue,
+  isPastDue,
   describeSchedule,
 } from "./schedule";
 export { ZoneBadge } from "./zone-badge";

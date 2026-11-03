@@ -331,7 +331,7 @@ export function ComponentGallery() {
         </div>
       </Section>
 
-      <Section title="P08 · P03 · P04 (complete-mission · cancel-completion)">
+      <Section title="P08 · P03 · P04 · P07 (complete · cancel · review-overdue)">
         <RewardDialogsSample />
       </Section>
 

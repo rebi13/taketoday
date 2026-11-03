@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CheckCriteriaField, MissionCard } from "@/entities/mission";
 import { CancelConfirmDialog } from "@/features/cancel-completion";
+import { OverdueMissionDialog } from "@/features/review-overdue-mission";
 import {
   DailyCapDialog,
   FirstCompletionDialog,
@@ -59,7 +60,9 @@ export function CheckCriteriaFieldSample() {
 }
 
 export function RewardDialogsSample() {
-  const [open, setOpen] = useState<"first" | "cap" | "cancel" | null>(null);
+  const [open, setOpen] = useState<
+    "first" | "cap" | "cancel" | "overdue" | null
+  >(null);
   return (
     <div className="flex flex-wrap gap-2">
       <Button type="button" variant="outline" onClick={() => setOpen("first")}>
@@ -68,6 +71,22 @@ export function RewardDialogsSample() {
       <Button type="button" variant="outline" onClick={() => setOpen("cap")}>
         P03 보상 다 모음
       </Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setOpen("overdue")}
+      >
+        P07 기한 지난 미션
+      </Button>
+      {/* 견본이라 끝내기·지우기를 누르면 없는 미션이어서 실패 알림이 뜬다 */}
+      <OverdueMissionDialog
+        missionId="00000000-0000-0000-0000-000000000000"
+        name="주민세 내기"
+        dueLabel="11월 1일"
+        open={open === "overdue"}
+        onOpenChange={(next) => !next && setOpen(null)}
+        onLeave={() => {}}
+      />
       <Button type="button" variant="outline" onClick={() => setOpen("cancel")}>
         P04 완료 취소 확인
       </Button>

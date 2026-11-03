@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, isNotNull, isNull, max } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, max, or } from "drizzle-orm";
 import {
   completions,
   dailyMissions,
@@ -47,7 +47,7 @@ export type TodayMission = {
 export type TodayRecommendations = {
   /** 서울 기준 오늘 */
   date: LocalDate;
-  /** 추천 순서대로. 그사이 지운 미션은 빠진다 */
+  /** 추천 순서대로. 그사이 지웠거나 꺼 둔(아직 안 한) 미션은 빠진다 */
   missions: TodayMission[];
   /** 오늘 적립 예정 수(상한까지). 추천 밖에서 한 완료도 센다 */
   pendingRewards: number;
@@ -97,6 +97,11 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
           eq(dailyMissions.localDate, today),
           isNotNull(dailyMissions.recommendRank),
           isNull(missions.deletedAt),
+          // 그사이 꺼 둔 미션(P07 끝내기 포함)은 빠진다. 이미 하거나 취소한 것은 남긴다
+          or(
+            eq(missions.active, true),
+            inArray(dailyMissions.status, ["done", "canceled"]),
+          ),
         ),
       )
       .orderBy(asc(dailyMissions.recommendRank));
