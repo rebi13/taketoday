@@ -169,11 +169,11 @@ function DayRecord({
           {DAILY_PERSONAL_REWARD_CAP}
         </span>
       </summary>
-      <ul className="flex flex-col gap-2 px-3 pb-3">
+      <ul className="flex flex-col gap-3 px-3 pb-3">
         {day.entries.map((entry) => (
           <li key={entry.dailyMissionId} className="grid">
+            {/* 홈 추천 카드와 같은 크기로 보여 준다 */}
             <MissionCard
-              size="compact"
               status={entry.status}
               name={entry.deleted ? `${entry.name} (지운 미션)` : entry.name}
               meta={
