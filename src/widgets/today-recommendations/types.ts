@@ -26,4 +26,8 @@ export type TodayData = {
   /** 오늘 더 하기로 고를 수 있는 미션 */
   addable: TodayMissionInfoData[];
   pendingRewards: number;
+  /** 재화 잔액 */
+  balance: number;
+  /** 아직 보여 주지 않은 정산 보상(P09) */
+  arrival: { settlementIds: string[]; days: number; amount: number } | null;
 };

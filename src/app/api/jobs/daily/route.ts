@@ -10,6 +10,11 @@ export async function GET(request: Request) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
   const result = await runDailyJob();
+  // Vercel Runtime Logs에서 결과를 바로 본다(식별 정보 없이 수만)
+  const { users, days, amount } = result.settlement;
+  console.info(
+    `[daily] ${result.today} 정산: 사용자 ${users}명, ${days}일, ${amount}`,
+  );
   return Response.json(result);
 }
 

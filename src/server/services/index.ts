@@ -77,5 +77,12 @@ export {
   type Records,
   type ZoneLastDone,
 } from "./records";
-export { getWallet, type SettledDay, type Wallet } from "./settlement";
+export {
+  acknowledgeRewards,
+  getWallet,
+  type AcknowledgeRewardsResult,
+  type RewardArrival,
+  type SettledDay,
+  type Wallet,
+} from "./settlement";
 export { runDailyJob, type DailyJobResult } from "./jobs";

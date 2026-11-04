@@ -22,7 +22,12 @@ import { addDays, localDate, type LocalDate } from "@/shared/lib/date";
 import type { Tx } from "./lists";
 import type { MissionZone } from "./missions";
 import { getSessionUser } from "./session";
-import { settlePendingDays } from "./settle-days";
+import {
+  settlePendingDays,
+  unseenRewards,
+  walletBalance,
+  type RewardArrival,
+} from "./settle-days";
 
 // 오늘의 추천(구현 계획 5.2, 기획서 6.7). 그날 처음 부를 때 만들어 daily_missions에 저장하고,
 // 그 뒤로는 저장한 것을 그대로 돌려줘 하루 동안 바뀌지 않는다.
@@ -60,11 +65,16 @@ export type TodayRecommendations = {
   addable: TodayMissionInfo[];
   /** 오늘 적립 예정 수(상한까지). 추천 밖에서 한 완료도 센다 */
   pendingRewards: number;
+  /** 재화 잔액(정산까지 끝낸 뒤) */
+  balance: number;
+  /** 아직 보여 주지 않은 정산 보상(P09). 없으면 null */
+  arrival: RewardArrival | null;
 };
 
 /**
  * S10 홈의 오늘의 추천. 로그인이 안 됐으면 null.
- * 한 트랜잭션: 밀린 정산 → 오늘 표시 남기기 → (처음이면) 내 미션·기록 읽기 → 고르기 → 저장 → 오늘 추천 읽기.
+ * 한 트랜잭션: 밀린 정산 → 오늘 표시 남기기 → (처음이면) 내 미션·기록 읽기 → 고르기 → 저장 →
+ * 오늘 추천·잔액·안 본 보상 읽기.
  * 같은 날 첫 요청이 동시에 와도 recommendation_days 기본 키에서 한쪽만 만든다
  */
 export async function getTodayRecommendations(): Promise<TodayRecommendations | null> {
@@ -95,7 +105,7 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
       zoneName: zones.name,
       zoneIcon: zones.icon,
     };
-    const [rows, mine, done] = await Promise.all([
+    const [rows, mine, done, balance, arrival] = await Promise.all([
       tx
         .select({
           ...missionColumns,
@@ -151,6 +161,8 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
         )
         .orderBy(asc(zones.sortOrder), asc(missions.createdAt)),
       todayCompletions(tx, user.id, today),
+      walletBalance(tx, user.id),
+      unseenRewards(tx, user.id),
     ]);
 
     const inToday = new Set(rows.map((row) => row.missionId));
@@ -174,6 +186,8 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
         .filter((row) => !inToday.has(row.missionId))
         .map(toMissionInfo),
       pendingRewards: countPendingRewards(done),
+      balance,
+      arrival,
     };
   });
 }
