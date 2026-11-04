@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-04 | 정산 함수(#23): `settleDay(day, completions)`가 받을 사람·사유별 지급액과 인정한 완료를 돌려준다. 상한은 사람×사유별, 동시각은 id 순. 홈 적립 예정 수(`countPendingRewards`)와 같은 수를 내는지 테스트로 묶음 |
 | 2026-11-03 | M1·M2 회고(docs/retrospectives/m1-m2.md). M3부터 정산 규칙을 `countPendingRewards`와 맞추고, 서비스 함수 테스트 방법을 정한다 |
 | 2026-11-03 | 추천 밖 미션 하기(#70): `addToToday`·`removeFromToday`(넣은 것만, 완료 기록이 없을 때만 뺌), 홈 "오늘 더 하기" 시트와 "오늘 더 한 미션"(추천 밖 그날의 미션), 내일로는 넣은 미션에도 허용, S12 "오늘 했어요". 오늘 더 하기 목록은 직접 만든 미션(최근 순) → 기본 미션(구역 순), "새 미션 만들어 넣기"(S13 `?from=today`, `createMission`의 `addToToday`로 한 트랜잭션), 미션 탭에서 만들면 T04에 "오늘 할 일에 넣기" |
 | 2026-11-03 | 기록 S16·S17·P07(#22): 구역별 마지막으로 한 날(내 미션이 있는 구역만), 기록 있는 최근 30일을 날짜별로 펼치기(가장 최근 날 펼침), 오늘 기록만 P04 취소·다시 완료, 지운 미션 기록도 남김, 지난 날 하지 않은 것은 "쉬어 갔어요". P07은 자동 팝업 대신 마감 지난 카드의 "정리"로 열고, 끝내기 = 꺼 두기(지우지 않음). 오늘 추천에서 그사이 꺼 둔 미션은 빠짐(이미 하거나 취소한 것은 남김) |
@@ -376,8 +377,8 @@ taketoday/
 
 구현 전에 함수 단위로 입출력을 고정해 두고, 각 함수에 테스트 케이스를 먼저 쓴다.
 
-### 5.1 정산 `settleDay(completions, cap = 10)`
-- 입력: 그날의 completion 목록. 출력: 인정된 completion id 목록, 지급액.
+### 5.1 정산 `settleDay(day, completions, { caps, reward })`
+- 입력: 정산할 날과 completion 목록(다른 날 것은 무시). 출력: 받을 사람 목록 — 사람·거래 사유(`personal_reward`/`shared_reward`)별 지급액과 인정한 completion id.
 - 규칙: canceled 제외 → completed_at 순 정렬 → mission_id별 첫 건 → 앞에서 cap개.
 - 테스트 케이스: 취소 후 재완료, 같은 미션 3번 완료, 11개 완료, 모두 취소, 자정 직전·직후 완료.
 
@@ -513,9 +514,9 @@ taketoday/
 - [x] missions의 담당 방식·담당자 컬럼 nullable로 존재
 - [ ] completions.user_id는 "수행자"로만 사용
 - [ ] wallet_transactions.reason에 `shared_reward` 정의
-- [ ] 정산 함수가 "받을 사람 목록 + 금액"을 반환
+- [x] 정산 함수가 "받을 사람 목록 + 금액"을 반환 (`settleDay`)
 - [x] 리스트 접근 권한 확인이 `canAccessList()` 한 함수로 모여 있음 (`server/domain/list-access.ts`)
-- [ ] 상한 카운트가 reason별로 분리
+- [x] 상한 카운트가 reason별로 분리 (`settleDay`의 사람×사유별 상한)
 - [ ] room_placements에 좌표 컬럼(nullable) 존재 — 2단계 자유 배치 대비
 - [ ] Auth.js에 provider 추가만으로 카카오·네이버 연결 가능
 
