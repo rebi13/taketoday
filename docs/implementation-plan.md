@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-04 | 매일 작업(#25): Vercel Cron `5 15 * * *`(서울 00:05) → `/api/jobs/daily`, `CRON_SECRET` Bearer 검증. 미정산 날이 있는 active 사용자를 사용자마다 한 트랜잭션으로 `settlePendingDays`(지연 정산과 같은 함수). 탈퇴 파기는 #40, 알림 예약은 M5에서 같은 작업에 붙임 |
 | 2026-11-04 | 정산·재화(#24): `daily_settlements`·`wallet_transactions` 테이블, `completions.settlement_id` 외래 키. 지연 정산은 홈 첫 요청(`getTodayRecommendations`) 트랜잭션에서 밀린 날을 모두 정산. 잔액은 거래 합계. 서비스 DB 테스트는 PGlite(ADR 0010) |
 | 2026-11-04 | 정산 함수(#23): `settleDay(day, completions)`가 받을 사람·사유별 지급액과 인정한 완료를 돌려준다. 상한은 사람×사유별, 동시각은 id 순. 홈 적립 예정 수(`countPendingRewards`)와 같은 수를 내는지 테스트로 묶음 |
 | 2026-11-03 | M1·M2 회고(docs/retrospectives/m1-m2.md). M3부터 정산 규칙을 `countPendingRewards`와 맞추고, 서비스 함수 테스트 방법을 정한다 |

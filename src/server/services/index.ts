@@ -78,3 +78,4 @@ export {
   type ZoneLastDone,
 } from "./records";
 export { getWallet, type SettledDay, type Wallet } from "./settlement";
+export { runDailyJob, type DailyJobResult } from "./jobs";

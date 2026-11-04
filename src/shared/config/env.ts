@@ -10,6 +10,11 @@ const serverEnvSchema = z.object({
   AUTH_GOOGLE_SECRET: z.string().min(1),
   // Vercel 운영·프리뷰에만 둔다. 이 값이 그대로 구글 redirect_uri가 되므로
   // 대시보드에서 붙여 넣다 섞인 앞뒤 공백을 자르고 https 주소인지 확인한다.
+  // Vercel Cron이 /api/jobs/daily에 Authorization: Bearer로 보낸다. 없으면 작업 요청을 모두 거부한다
+  CRON_SECRET: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim() || undefined : v),
+    z.string().min(16).optional(),
+  ),
   AUTH_REDIRECT_PROXY_URL: z.preprocess(
     (v) => (typeof v === "string" ? v.trim() || undefined : v),
     z.url({ protocol: /^https$/ }).optional(),
