@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, eq, inArray, isNotNull, isNull, max, or } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, max, or } from "drizzle-orm";
 import {
   completions,
   dailyMissions,
@@ -22,6 +22,7 @@ import { addDays, localDate, type LocalDate } from "@/shared/lib/date";
 import type { Tx } from "./lists";
 import type { MissionZone } from "./missions";
 import { getSessionUser } from "./session";
+import { settlePendingDays } from "./settle-days";
 
 // 오늘의 추천(구현 계획 5.2, 기획서 6.7). 그날 처음 부를 때 만들어 daily_missions에 저장하고,
 // 그 뒤로는 저장한 것을 그대로 돌려줘 하루 동안 바뀌지 않는다.
@@ -63,7 +64,7 @@ export type TodayRecommendations = {
 
 /**
  * S10 홈의 오늘의 추천. 로그인이 안 됐으면 null.
- * 한 트랜잭션: 오늘 표시 남기기 → (처음이면) 내 미션·기록 읽기 → 고르기 → 저장 → 오늘 추천 읽기.
+ * 한 트랜잭션: 밀린 정산 → 오늘 표시 남기기 → (처음이면) 내 미션·기록 읽기 → 고르기 → 저장 → 오늘 추천 읽기.
  * 같은 날 첫 요청이 동시에 와도 recommendation_days 기본 키에서 한쪽만 만든다
  */
 export async function getTodayRecommendations(): Promise<TodayRecommendations | null> {
@@ -72,6 +73,8 @@ export async function getTodayRecommendations(): Promise<TodayRecommendations | 
   const today = localDate();
 
   return getDb().transaction(async (tx) => {
+    // 지연 정산: 지난 날의 완료를 먼저 정산한다(다음 날 첫 요청 = 홈, ADR 0003)
+    await settlePendingDays(tx, user.id, today);
     const [firstToday] = await tx
       .insert(recommendationDays)
       .values({ userId: user.id, localDate: today })
@@ -206,11 +209,13 @@ function toMissionInfo(row: MissionInfoRow): TodayMissionInfo {
   };
 }
 
-function withoutFlag({
-  recommended: _recommended,
-  ...mission
-}: TodayMission & { recommended: boolean }): TodayMission {
-  return mission;
+function withoutFlag(
+  mission: TodayMission & { recommended: boolean },
+): TodayMission {
+  // 화면에는 추천 여부를 두 목록(missions·extra)으로 나눠 보낸다
+  const { recommended, ...rest } = mission;
+  void recommended;
+  return rest;
 }
 
 /** 내 미션과 기록으로 오늘의 추천을 골라 저장한다 */
