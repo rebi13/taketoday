@@ -11,7 +11,11 @@ import {
   type Db,
 } from "@/server/db";
 import { createTestDb } from "@/server/db/testing";
-import { settlePendingDays, walletBalance } from "./settle-days";
+import {
+  settleAllPending,
+  settlePendingDays,
+  walletBalance,
+} from "./settle-days";
 
 // 정산을 실제 SQL로 확인한다(PGlite, ADR 0010).
 // 핵심: 같은 날을 두 번 정산해도 한 번만 지급된다(M3 완료 기준).
@@ -183,5 +187,66 @@ describe("settlePendingDays", () => {
       { date: "2026-11-02", rewardedCount: 1, amount: 10 },
     ]);
     expect(await walletBalance(db, userId)).toBe(110);
+  });
+});
+
+describe("settleAllPending: 매일 작업의 백업 정산", () => {
+  /** 다른 사용자와 그 리스트를 만들고, 그 사용자로 바꿔 완료를 넣는다 */
+  async function asNewUser(email: string, status: "active" | "deactivated") {
+    const [user] = await db
+      .insert(users)
+      .values({
+        email,
+        status,
+        deactivatedAt: status === "deactivated" ? new Date() : null,
+      })
+      .returning({ id: users.id });
+    const [list] = await db
+      .insert(missionLists)
+      .values({ ownerType: "user", ownerId: user.id })
+      .returning({ id: missionLists.id });
+    userId = user.id;
+    listId = list.id;
+    return user.id;
+  }
+
+  it("접속하지 않은 사용자들의 미정산 날을 정산한다", async () => {
+    const first = userId;
+    await complete(YESTERDAY, "컵 치우기");
+    const second = await asNewUser("second@example.test", "active");
+    await complete("2026-11-02", "이불 개기");
+    await complete(YESTERDAY, "창문 열기");
+
+    const run = await settleAllPending(db, TODAY);
+
+    expect(run).toEqual({ users: 2, days: 3, amount: 30 });
+    expect(await walletBalance(db, first)).toBe(10);
+    expect(await walletBalance(db, second)).toBe(20);
+  });
+
+  it("두 번 돌거나 지연 정산이 먼저 했어도 다시 주지 않는다", async () => {
+    await complete(YESTERDAY, "컵 치우기");
+    await settlePendingDays(db, userId, TODAY);
+
+    expect(await settleAllPending(db, TODAY)).toEqual({
+      users: 0,
+      days: 0,
+      amount: 0,
+    });
+    await settleAllPending(db, TODAY);
+    expect(await walletBalance(db, userId)).toBe(10);
+  });
+
+  it("오늘 완료와 탈퇴한 사용자는 정산하지 않는다", async () => {
+    await complete(TODAY, "컵 치우기");
+    const leaving = await asNewUser("leaving@example.test", "deactivated");
+    await complete(YESTERDAY, "이불 개기");
+
+    expect(await settleAllPending(db, TODAY)).toEqual({
+      users: 0,
+      days: 0,
+      amount: 0,
+    });
+    expect(await walletBalance(db, leaving)).toBe(0);
   });
 });

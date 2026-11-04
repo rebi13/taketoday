@@ -116,8 +116,23 @@ pnpm dlx auth secret
 | `AUTH_GOOGLE_ID` | 구글 클라이언트 ID | 같음 | |
 | `AUTH_GOOGLE_SECRET` | 구글 클라이언트 보안 비밀번호 | 같음 | |
 | `AUTH_REDIRECT_PROXY_URL` | `https://take-today.vercel.app/api/auth` | **같음** | 두 환경 모두에 넣어야 프록시가 켜진다 |
+| `CRON_SECRET` | 값 B | 값 C(달라도 됨) | 매일 정산 작업 `/api/jobs/daily` 요청 검증(#25). 아래 "매일 작업" 참고 |
 
 `AUTH_URL`, `AUTH_TRUST_HOST`는 넣지 않는다. Vercel에서는 Auth.js가 자동으로 알아낸다.
+
+### 매일 작업 `CRON_SECRET`
+
+`vercel.json`의 `crons`가 운영 배포에서만 하루 한 번(UTC 15:05 = 서울 00:05 전후, Hobby는 최대 59분 어긋남) `/api/jobs/daily`를 부른다. 이때 Vercel이 `Authorization: Bearer <CRON_SECRET>`을 붙인다. 값이 없거나 틀리면 작업은 401로 아무것도 하지 않는다.
+
+1. 값을 만든다: `openssl rand -base64 32`
+2. Vercel → Settings → Environment Variables에 `CRON_SECRET`으로 **Production**에 넣는다. 프리뷰에서 손으로 불러 보려면 **Preview**에도 넣는다(다른 값이어도 된다).
+3. 다시 배포해야 값이 들어간다.
+
+프리뷰에서 손으로 확인하기(Vercel 배포 보호가 켜져 있으면 브라우저 대신 Vercel 대시보드의 Cron Jobs → Run을 쓴다):
+
+```bash
+curl -H "Authorization: Bearer <Preview의 CRON_SECRET>" https://<프리뷰 주소>/api/jobs/daily
+```
 
 ### 로컬 (`.env.local`)
 
@@ -153,6 +168,5 @@ M5(알림)에서 추가한다. 지금은 만들 필요 없다.
 
 | 이름 | 용도 |
 |---|---|
-| `CRON_SECRET` | `/api/jobs/daily` (Vercel Cron) 요청 검증 |
 | `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY` | 알림 예약과 `/api/jobs/notify`·`/api/jobs/evening` 서명 검증 |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | 웹 푸시 |

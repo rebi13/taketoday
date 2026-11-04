@@ -3,6 +3,7 @@ import { and, eq, inArray, isNull, lt, sum } from "drizzle-orm";
 import {
   completions,
   dailySettlements,
+  users,
   walletTransactions,
   type Db,
 } from "@/server/db";
@@ -100,4 +101,55 @@ export async function walletBalance(tx: Tx | Db, userId: string) {
     .from(walletTransactions)
     .where(eq(walletTransactions.userId, userId));
   return Number(row?.total ?? 0);
+}
+
+export type DailySettlementRun = {
+  /** 이번에 정산한 사용자 수 */
+  users: number;
+  /** 이번에 정산한 날(사용자 × 날짜) 수 */
+  days: number;
+  /** 이번에 지급한 합계 */
+  amount: number;
+};
+
+/**
+ * 매일 작업(#25)의 백업 정산. 정산 안 한 지난 날이 있는 active 사용자를 찾아 사용자마다 한
+ * 트랜잭션으로 settlePendingDays를 부른다(한 사람이 실패해도 다른 사람은 정산된다).
+ * 지연 정산과 같은 함수·같은 유니크 제약을 쓰므로 여러 번 돌거나 겹쳐도 결과가 같다.
+ * 탈퇴(deactivated)한 사용자는 정산하지 않는다
+ */
+export async function settleAllPending(
+  db: Db,
+  today: LocalDate,
+): Promise<DailySettlementRun> {
+  const pending = await db
+    .selectDistinct({ userId: completions.userId })
+    .from(completions)
+    .innerJoin(users, eq(users.id, completions.userId))
+    .leftJoin(
+      dailySettlements,
+      and(
+        eq(dailySettlements.userId, completions.userId),
+        eq(dailySettlements.localDate, completions.localDate),
+      ),
+    )
+    .where(
+      and(
+        lt(completions.localDate, today),
+        isNull(dailySettlements.id),
+        eq(users.status, "active"),
+      ),
+    );
+
+  const run: DailySettlementRun = { users: 0, days: 0, amount: 0 };
+  for (const { userId } of pending) {
+    const settled = await db.transaction((tx) =>
+      settlePendingDays(tx, userId, today),
+    );
+    if (settled.length === 0) continue;
+    run.users += 1;
+    run.days += settled.length;
+    run.amount += settled.reduce((total, day) => total + day.amount, 0);
+  }
+  return run;
 }
