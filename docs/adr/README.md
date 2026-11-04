@@ -13,3 +13,4 @@
 | [0007](0007-migrate-on-vercel-build.md) | DB 마이그레이션은 Vercel 빌드에서 적용 | 승인 |
 | [0008](0008-seed-on-vercel-build.md) | 시드는 Vercel 빌드에서 마이그레이션 다음에 적용 | 승인 |
 | [0009](0009-optimistic-without-tanstack-query.md) | 낙관적 업데이트는 TanStack Query 없이 useOptimistic + Server Action으로 | 승인 |
+| [0010](0010-service-tests-with-pglite.md) | DB 제약에 기대는 서비스는 PGlite로 테스트한다 | 승인 |

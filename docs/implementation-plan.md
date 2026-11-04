@@ -7,6 +7,7 @@
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-11-04 | 정산·재화(#24): `daily_settlements`·`wallet_transactions` 테이블, `completions.settlement_id` 외래 키. 지연 정산은 홈 첫 요청(`getTodayRecommendations`) 트랜잭션에서 밀린 날을 모두 정산. 잔액은 거래 합계. 서비스 DB 테스트는 PGlite(ADR 0010) |
 | 2026-11-04 | 정산 함수(#23): `settleDay(day, completions)`가 받을 사람·사유별 지급액과 인정한 완료를 돌려준다. 상한은 사람×사유별, 동시각은 id 순. 홈 적립 예정 수(`countPendingRewards`)와 같은 수를 내는지 테스트로 묶음 |
 | 2026-11-03 | M1·M2 회고(docs/retrospectives/m1-m2.md). M3부터 정산 규칙을 `countPendingRewards`와 맞추고, 서비스 함수 테스트 방법을 정한다 |
 | 2026-11-03 | 추천 밖 미션 하기(#70): `addToToday`·`removeFromToday`(넣은 것만, 완료 기록이 없을 때만 뺌), 홈 "오늘 더 하기" 시트와 "오늘 더 한 미션"(추천 밖 그날의 미션), 내일로는 넣은 미션에도 허용, S12 "오늘 했어요". 오늘 더 하기 목록은 직접 만든 미션(최근 순) → 기본 미션(구역 순), "새 미션 만들어 넣기"(S13 `?from=today`, `createMission`의 `addToToday`로 한 트랜잭션), 미션 탭에서 만들면 T04에 "오늘 할 일에 넣기" |
@@ -81,7 +82,7 @@
 | 검증 | zod | API 입력, AI 출력 JSON, 시드 데이터 검증을 한 스키마로 |
 | 날짜 | `@date-fns/tz` | 모든 "하루" 계산을 Asia/Seoul 기준 localDate로 통일 |
 | AI | 저가 경량 LLM (structured output 지원) | 호출을 `server/ai` 모듈 하나로 감싸 모델 교체 가능하게 |
-| 테스트 | Vitest (도메인 로직) + Playwright (핵심 흐름 몇 개) | 정산·추천·상한은 순수 함수 단위 테스트로 보장 |
+| 테스트 | Vitest (도메인 로직) + PGlite (DB 제약에 기대는 서비스) + Playwright (핵심 흐름 몇 개) | 정산·추천·상한은 순수 함수 단위 테스트로, 중복 정산 방지처럼 제약이 지키는 것은 PGlite로 실제 SQL을 돌려 보장(ADR 0010) |
 | 모니터링 | Sentry (에러) | 출시 직전 도입 |
 
 ### 2.1 예약 작업 구성
@@ -357,8 +358,8 @@ taketoday/
 | recommendation_days | (user_id, local_date) 기본 키 — 그날 추천을 만들었다는 표시(0개인 날 포함), 동시 첫 요청도 한 번만 |
 | daily_missions | (user_id, mission_id, local_date) 유니크, recommend_rank(추천 순서, 추천 밖이면 null) |
 | completions | local_date 인덱스, canceled_at, settlement_id nullable, daily_mission당 취소 안 한 완료 하나(부분 유니크) |
-| daily_settlements | **(user_id, local_date) 유니크** — 중복 정산 방지의 핵심 |
-| wallet_transactions | reason enum에 `personal_reward`, `shared_reward`, `purchase` 등 미리 정의 |
+| daily_settlements | **(user_id, local_date) 유니크** — 중복 정산 방지의 핵심. 인정 0개인 날도 남겨 다시 정산하지 않음 |
+| wallet_transactions | reason enum에 `personal_reward`, `shared_reward`, `purchase`, `gacha`, `gacha_refund`, `bonus_roulette`. 보상은 (user_id, reason, related_id) 부분 유니크로 같은 정산을 두 번 주지 않음. 잔액은 합계(캐시 컬럼 없음) |
 | items, inventories | inventories (user_id, item_id) 유니크 |
 | room_placements | (user_id, slot_key) 유니크 |
 | character_types, characters | 시드 3종 |
@@ -513,7 +514,7 @@ taketoday/
 - [x] mission_lists.owner_type 존재, 생성 시 `user` 고정 (`finishOnboarding`)
 - [x] missions의 담당 방식·담당자 컬럼 nullable로 존재
 - [ ] completions.user_id는 "수행자"로만 사용
-- [ ] wallet_transactions.reason에 `shared_reward` 정의
+- [x] wallet_transactions.reason에 `shared_reward` 정의
 - [x] 정산 함수가 "받을 사람 목록 + 금액"을 반환 (`settleDay`)
 - [x] 리스트 접근 권한 확인이 `canAccessList()` 한 함수로 모여 있음 (`server/domain/list-access.ts`)
 - [x] 상한 카운트가 reason별로 분리 (`settleDay`의 사람×사유별 상한)

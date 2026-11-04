@@ -219,10 +219,43 @@ const projectRules = {
   },
 };
 
+// 테스트 파일만 테스트 전용 DB(server/db/testing.ts, PGlite, ADR 0010)를 더 가져올 수 있다.
+// 앱 코드가 가져오면 PGlite가 번들에 들어가므로 같은 규칙에 이 하나만 더한다.
+const [, layerPolicy] = layerBoundaries.rules["boundaries/dependencies"];
+const testBoundaries = {
+  files: ["src/**/*.test.ts"],
+  plugins: { boundaries },
+  settings: layerBoundaries.settings,
+  rules: {
+    "boundaries/dependencies": [
+      2,
+      {
+        ...layerPolicy,
+        policies: [
+          ...layerPolicy.policies,
+          {
+            from: { element: { type: "server" } },
+            allow: {
+              to: {
+                element: {
+                  type: "server",
+                  captured: { segment: "db" },
+                  fileInternalPath: "testing.ts",
+                },
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   layerBoundaries,
+  testBoundaries,
   projectRules,
   // 포맷은 Prettier가 맡는다. 겹치는 ESLint 규칙을 끈다.
   prettier,

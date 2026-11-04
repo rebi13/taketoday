@@ -43,6 +43,13 @@
       "when": 1793684611847,
       "tag": "0005_daily_missions",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793754758091,
+      "tag": "0006_settlement_wallet",
+      "breakpoints": true
     }
   ]
 }

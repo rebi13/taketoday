@@ -15,6 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./auth";
 import { missions } from "./missions";
+import { dailySettlements } from "./wallet";
 
 // 날짜별 미션과 완료 기록(기획서 6.7, 구현 계획 4장·5.2).
 // 미션 자체와 "그날의 미션"을 나눠 날짜별로 남긴다. 날짜는 모두 서울 기준 localDate.
@@ -110,8 +111,8 @@ export const completions = pgTable(
       .notNull()
       .defaultNow(),
     canceledAt: timestamp("canceled_at", { withTimezone: true }),
-    /** 정산에 들어간 날의 정산. daily_settlements(#23)를 만들 때 외래 키를 건다 */
-    settlementId: uuid("settlement_id"),
+    /** 이 완료를 보상으로 인정한 정산. 인정하지 않은 완료(취소·중복·상한 밖)는 null */
+    settlementId: uuid("settlement_id").references(() => dailySettlements.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

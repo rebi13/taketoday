@@ -77,3 +77,4 @@ export {
   type Records,
   type ZoneLastDone,
 } from "./records";
+export { getWallet, type SettledDay, type Wallet } from "./settlement";

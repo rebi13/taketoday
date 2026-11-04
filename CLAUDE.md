@@ -49,6 +49,7 @@ src/server     서버 전용: db, domain, services, ai, push, auth
 - 화면 코드(Server Action, Route Handler 포함)는 `server/services`만 호출한다. 화면에서 DB나 `server/domain`을 직접 쓰지 않는다.
 - `src/server/**` 파일은 `import "server-only"`로 시작한다.
 - `server/domain`은 DB·네트워크를 모르는 순수 함수다. 같은 폴더에 `*.test.ts`를 둔다.
+- 유니크 제약·트랜잭션에 기대는 서비스(정산·구매)는 PGlite로 실제 SQL 테스트를 둔다(`createTestDb()`, ADR 0010). 세션을 읽는 부분과 나눠 트랜잭션을 받는 함수만 테스트한다.
 - `server/services`의 함수 하나 = 트랜잭션 하나. "읽기 → domain 함수 → 한 번에 쓰기" 순서를 지킨다.
 - Drizzle `sql` 템플릿 안의 컬럼(`${table.col}`)은 select 절에서 테이블 이름 없이 나간다. 서브쿼리(`exists (select … where ${a.x} = ${b.id})`)에 쓰면 다른 테이블 컬럼으로 해석되니 join을 쓴다.
 - 위 import 규칙은 `eslint.config.mjs`의 `boundaries/dependencies`가 검사한다. 허용 목록 밖은 모두 막는다.
