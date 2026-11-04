@@ -3,6 +3,7 @@ import { and, asc, desc, eq, gte, isNull, max } from "drizzle-orm";
 import {
   completions,
   dailyMissions,
+  dailySettlements,
   getDb,
   missionLists,
   missions,
@@ -13,6 +14,7 @@ import { localDate, type LocalDate } from "@/shared/lib/date";
 import type { DailyMissionStatus } from "./recommendations";
 import type { MissionZone } from "./missions";
 import { getSessionUser } from "./session";
+import { settlePendingDays } from "./settle-days";
 
 // S16 기록·S17 날짜별 상세(기획서 6.7, screen-flow "기록").
 // "10월 28일에 무엇을 추천받았고 무엇을 했는지"가 그대로 남는다. 지운 미션의 기록도 남긴다.
@@ -36,8 +38,10 @@ export type RecordDay = {
   date: LocalDate;
   /** 추천 순서 → 추천 밖에서 한 것 순 */
   entries: RecordEntry[];
-  /** 그날 보상으로 인정되는 완료 수(정산과 같은 규칙, 상한까지) */
+  /** 그날 보상으로 인정되는 완료 수(상한까지). 정산한 날은 정산 결과, 오늘은 적립 예정 */
   rewardCount: number;
+  /** 정산해서 받은 재화(S17). 아직 정산하지 않은 오늘은 null */
+  settledAmount: number | null;
 };
 
 export type ZoneLastDone = {
@@ -55,12 +59,16 @@ export type Records = {
   zones: ZoneLastDone[];
 };
 
-/** S16 화면 데이터. 로그인이 안 됐으면 null. 읽기만 한다 */
+/**
+ * S16 화면 데이터. 로그인이 안 됐으면 null.
+ * 지난 날 보상을 정산 결과로 보여 주려고 밀린 정산을 먼저 끝낸다(홈을 거치지 않고 왔을 때)
+ */
 export async function getRecords(): Promise<Records | null> {
   const user = await getSessionUser();
   if (!user) return null;
   const today = localDate();
   const db = getDb();
+  await db.transaction((tx) => settlePendingDays(tx, user.id, today));
 
   const [recentDates, zoneRows] = await Promise.all([
     db
@@ -106,7 +114,7 @@ export async function getRecords(): Promise<Records | null> {
   const oldest = recentDates.at(-1)?.date;
   if (!oldest) return { today, days: [], zones: zoneList };
 
-  const [entryRows, completionRows] = await Promise.all([
+  const [entryRows, completionRows, settlementRows] = await Promise.all([
     db
       .select({
         dailyMissionId: dailyMissions.id,
@@ -149,16 +157,33 @@ export async function getRecords(): Promise<Records | null> {
           gte(completions.localDate, oldest),
         ),
       ),
+    db
+      .select({
+        date: dailySettlements.localDate,
+        rewardedCount: dailySettlements.rewardedCount,
+        amount: dailySettlements.amount,
+      })
+      .from(dailySettlements)
+      .where(
+        and(
+          eq(dailySettlements.userId, user.id),
+          gte(dailySettlements.localDate, oldest),
+        ),
+      ),
   ]);
 
+  const settledOn = new Map(settlementRows.map((row) => [row.date, row]));
   const days = new Map<LocalDate, RecordDay>();
   for (const { date } of recentDates) {
+    const settled = settledOn.get(date);
     days.set(date, {
       date,
       entries: [],
-      rewardCount: countPendingRewards(
-        completionRows.filter((c) => c.date === date),
-      ),
+      // 완료가 없던 날은 정산 행이 없다(받은 것 0)
+      rewardCount:
+        settled?.rewardedCount ??
+        countPendingRewards(completionRows.filter((c) => c.date === date)),
+      settledAmount: settled ? settled.amount : date < today ? 0 : null,
     });
   }
   for (const row of entryRows) {

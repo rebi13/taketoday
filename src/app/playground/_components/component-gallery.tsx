@@ -48,7 +48,7 @@ import {
   SheetTrigger,
 } from "@/shared/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { PendingRewardMeter } from "@/entities/wallet";
+import { PendingRewardMeter, WalletBalance } from "@/entities/wallet";
 import {
   AddToTodaySample,
   CheckCriteriaFieldSample,
@@ -332,7 +332,15 @@ export function ComponentGallery() {
         </div>
       </Section>
 
-      <Section title="P08 · P03 · P04 · P07 (complete · cancel · review-overdue)">
+      <Section title="WalletBalance (entities/wallet)">
+        <div className="flex flex-wrap gap-2">
+          <WalletBalance balance={0} />
+          <WalletBalance balance={50} />
+          <WalletBalance balance={12340} />
+        </div>
+      </Section>
+
+      <Section title="P08 · P03 · P04 · P07 · P09 (complete · cancel · review-overdue · acknowledge-reward)">
         <RewardDialogsSample />
       </Section>
 

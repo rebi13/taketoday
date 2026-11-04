@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { CheckCriteriaField, MissionCard } from "@/entities/mission";
+import { RewardArrivalDialog } from "@/features/acknowledge-reward";
 import { AddToTodaySheet } from "@/features/add-to-today";
 import { CancelConfirmDialog } from "@/features/cancel-completion";
 import { OverdueMissionDialog } from "@/features/review-overdue-mission";
@@ -62,7 +63,7 @@ export function CheckCriteriaFieldSample() {
 
 export function RewardDialogsSample() {
   const [open, setOpen] = useState<
-    "first" | "cap" | "cancel" | "overdue" | null
+    "first" | "cap" | "cancel" | "overdue" | "arrival1" | "arrival3" | null
   >(null);
   return (
     <div className="flex flex-wrap gap-2">
@@ -96,6 +97,29 @@ export function RewardDialogsSample() {
         open={open === "cancel"}
         onOpenChange={(next) => !next && setOpen(null)}
         onConfirm={() => toast("완료를 취소했어요")}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setOpen("arrival1")}
+      >
+        P09 어제 보상
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setOpen("arrival3")}
+      >
+        P09 며칠 만에
+      </Button>
+      <RewardArrivalDialog
+        arrival={
+          open === "arrival3"
+            ? { days: 3, amount: 120 }
+            : { days: 1, amount: 50 }
+        }
+        open={open === "arrival1" || open === "arrival3"}
+        onOpenChange={(next) => !next && setOpen(null)}
       />
       <FirstCompletionDialog
         open={open === "first"}

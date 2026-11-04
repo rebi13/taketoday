@@ -50,6 +50,8 @@ export const dailySettlements = pgTable(
     settledAt: timestamp("settled_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    /** 사용자가 P09 "어제 보상 도착"으로 본 때. 매일 작업이 먼저 정산해도 다음 접속에 한 번 보여 준다 */
+    seenAt: timestamp("seen_at", { withTimezone: true }),
   },
   (t) => [
     uniqueIndex("daily_settlements_user_date_unique").on(t.userId, t.localDate),

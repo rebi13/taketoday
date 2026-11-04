@@ -15,6 +15,8 @@ export type RecordDayData = {
   date: string;
   entries: RecordEntryData[];
   rewardCount: number;
+  /** 정산해서 받은 재화. 오늘은 null */
+  settledAmount: number | null;
 };
 
 export type RecordsData = {

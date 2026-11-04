@@ -21,7 +21,7 @@ import type { RecordDayData, RecordEntryData, RecordsData } from "./types";
 
 // S16 기록과 S17 날짜별 상세(screen-flow "기록" ⑥ 펼치기). 구역별 마지막으로 한 날과
 // 날짜별로 무엇을 추천받고 무엇을 했는지 보여 준다. 오늘 기록만 P04로 취소하고, 취소한 것은
-// 다시 완료할 수 있다(기획서 6.5). 지난 날은 바꿀 수 없다
+// 다시 완료할 수 있다(기획서 6.5). 지난 날은 바꿀 수 없고, 정산해서 받은 보상을 보여 준다
 
 type Change = { missionId: string; status: "done" | "canceled" };
 
@@ -165,8 +165,12 @@ function DayRecord({
           {isToday && <Badge variant="secondary">오늘</Badge>}
         </span>
         <span className="text-sm text-muted-foreground">
-          완료 {doneCount} · {isToday ? "적립 예정" : "보상"} {day.rewardCount}/
-          {DAILY_PERSONAL_REWARD_CAP}
+          완료 {doneCount} ·{" "}
+          {day.settledAmount === null
+            ? `적립 예정 ${day.rewardCount}/${DAILY_PERSONAL_REWARD_CAP}`
+            : day.settledAmount > 0
+              ? `받은 보상 +${day.settledAmount}`
+              : "받은 보상 없음"}
         </span>
       </summary>
       <ul className="flex flex-col gap-3 px-3 pb-3">

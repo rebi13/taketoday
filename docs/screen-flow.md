@@ -56,7 +56,7 @@ flowchart TD
   P20 -. "나중에" .-> S09
   S08 -. "건너뛰기" .-> S09
   S09["S09 시작 선물 받기<br>침대 · 러그 · 스탠드"]:::screen --> S10
-  auth -- "로그인 됨" --> settle{"정산된<br>어제 보상?"}:::q
+  auth -- "로그인 됨" --> settle{"아직 안 본<br>정산 보상?"}:::q
   isnew -- "아니오" --> settle
   settle -- "있음" --> P09(["P09 어제 보상 도착"]):::pop --> S10
   settle -- "없음" --> S10["S10 홈"]:::screen

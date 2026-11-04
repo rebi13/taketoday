@@ -12,8 +12,10 @@ import {
 } from "@/server/db";
 import { createTestDb } from "@/server/db/testing";
 import {
+  markRewardsSeen,
   settleAllPending,
   settlePendingDays,
+  unseenRewards,
   walletBalance,
 } from "./settle-days";
 
@@ -248,5 +250,53 @@ describe("settleAllPending: 매일 작업의 백업 정산", () => {
       amount: 0,
     });
     expect(await walletBalance(db, leaving)).toBe(0);
+  });
+});
+
+describe("unseenRewards · markRewardsSeen: P09 어제 보상 도착", () => {
+  it("매일 작업이 먼저 정산했어도 다음 접속에 보여 주고, 닫으면 다시 보여 주지 않는다", async () => {
+    await complete(YESTERDAY, "컵 치우기");
+    await complete(YESTERDAY, "이불 개기");
+    await settleAllPending(db, TODAY);
+    // 홈의 지연 정산은 할 것이 없다
+    expect(await settlePendingDays(db, userId, TODAY)).toEqual([]);
+
+    const arrival = await unseenRewards(db, userId);
+    expect(arrival).toMatchObject({
+      days: 1,
+      latestDate: YESTERDAY,
+      amount: 20,
+    });
+
+    await markRewardsSeen(db, userId, arrival!.settlementIds);
+    expect(await unseenRewards(db, userId)).toBeNull();
+  });
+
+  it("며칠 만에 오면 보상이 있는 날만 모아 합친다", async () => {
+    await complete("2026-11-01", "컵 치우기");
+    await complete("2026-11-02", "이불 개기", { canceled: true });
+    await complete(YESTERDAY, "창문 열기");
+    await complete(YESTERDAY, "화분 물 주기");
+    await settlePendingDays(db, userId, TODAY);
+
+    expect(await unseenRewards(db, userId)).toMatchObject({
+      days: 2,
+      latestDate: YESTERDAY,
+      amount: 30,
+    });
+  });
+
+  it("다른 사람의 정산은 본 것으로 바꾸지 않는다", async () => {
+    await complete(YESTERDAY, "컵 치우기");
+    await settlePendingDays(db, userId, TODAY);
+    const mine = await unseenRewards(db, userId);
+    const [other] = await db
+      .insert(users)
+      .values({ email: "other@example.test" })
+      .returning({ id: users.id });
+
+    await markRewardsSeen(db, other.id, mine!.settlementIds);
+
+    expect(await unseenRewards(db, userId)).toMatchObject({ amount: 10 });
   });
 });

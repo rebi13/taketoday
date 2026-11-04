@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray, isNull, lt, sum } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, lt, sum } from "drizzle-orm";
 import {
   completions,
   dailySettlements,
@@ -101,6 +101,69 @@ export async function walletBalance(tx: Tx | Db, userId: string) {
     .from(walletTransactions)
     .where(eq(walletTransactions.userId, userId));
   return Number(row?.total ?? 0);
+}
+
+export type RewardArrival = {
+  /** 이번에 보여 줄 정산(P09를 닫으면 본 것으로 표시한다) */
+  settlementIds: string[];
+  /** 보상이 있는 날 수. 하루면 "어제 보상", 여러 날이면 "지난 보상" */
+  days: number;
+  /** 가장 최근 정산한 날 */
+  latestDate: LocalDate;
+  /** 합계 */
+  amount: number;
+};
+
+/**
+ * 아직 보여 주지 않은, 보상이 있는 정산(P09). 없으면 null.
+ * 지연 정산이든 매일 작업이든 누가 정산했는지와 상관없이 다음 접속에 한 번 보여 준다
+ */
+export async function unseenRewards(
+  tx: Tx | Db,
+  userId: string,
+): Promise<RewardArrival | null> {
+  const rows = await tx
+    .select({
+      id: dailySettlements.id,
+      localDate: dailySettlements.localDate,
+      amount: dailySettlements.amount,
+    })
+    .from(dailySettlements)
+    .where(
+      and(
+        eq(dailySettlements.userId, userId),
+        isNull(dailySettlements.seenAt),
+        gt(dailySettlements.amount, 0),
+      ),
+    )
+    .orderBy(asc(dailySettlements.localDate));
+  const latest = rows.at(-1);
+  if (!latest) return null;
+  return {
+    settlementIds: rows.map((row) => row.id),
+    days: rows.length,
+    latestDate: latest.localDate,
+    amount: rows.reduce((total, row) => total + row.amount, 0),
+  };
+}
+
+/** P09를 닫았다: 그 정산들을 본 것으로 표시한다. 내 정산만, 여러 번 불러도 같다 */
+export async function markRewardsSeen(
+  tx: Tx | Db,
+  userId: string,
+  settlementIds: readonly string[],
+): Promise<void> {
+  if (settlementIds.length === 0) return;
+  await tx
+    .update(dailySettlements)
+    .set({ seenAt: new Date() })
+    .where(
+      and(
+        eq(dailySettlements.userId, userId),
+        inArray(dailySettlements.id, [...settlementIds]),
+        isNull(dailySettlements.seenAt),
+      ),
+    );
 }
 
 export type DailySettlementRun = {

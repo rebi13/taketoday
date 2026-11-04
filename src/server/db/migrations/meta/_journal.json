@@ -50,6 +50,13 @@
       "when": 1793754758091,
       "tag": "0006_settlement_wallet",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793771939652,
+      "tag": "0007_settlement_seen",
+      "breakpoints": true
     }
   ]
 }

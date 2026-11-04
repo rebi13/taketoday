@@ -11,7 +11,8 @@ import {
   MissionCard,
   ZoneBadge,
 } from "@/entities/mission";
-import { PendingRewardMeter } from "@/entities/wallet";
+import { PendingRewardMeter, WalletBalance } from "@/entities/wallet";
+import { RewardArrival } from "@/features/acknowledge-reward";
 import {
   CancelConfirmDialog,
   useCancelCompletion,
@@ -25,7 +26,8 @@ import { DAILY_PERSONAL_REWARD_CAP } from "@/shared/config/constants";
 import { Button } from "@/shared/ui/button";
 import type { TodayData, TodayMissionData } from "./types";
 
-// S10 홈의 오늘의 추천과 적립 예정 n/10(screen-flow "하루 흐름").
+// S10 홈의 재화 잔액, 오늘의 추천과 적립 예정 n/10(screen-flow "하루 흐름").
+// 아직 안 본 정산 보상이 있으면 P09 어제 보상 도착을 한 번 띄운다(screen-flow "앱 열기").
 // 완료·내일로·되돌리기는 서버 응답을 기다리지 않고 먼저 표시한다(useOptimistic, ADR 0009).
 // 되돌린(취소한) 미션은 같은 날 "다시 완료"할 수 있다(기획서 6.5).
 // 카드를 누르면 P01 완료 기준 보기, 거기서도 완료·내 기준으로 바꾸기를 할 수 있다.
@@ -164,6 +166,9 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
 
   return (
     <section aria-label="오늘의 추천" className="flex flex-col gap-4">
+      <div className="flex">
+        <WalletBalance balance={state.balance} />
+      </div>
       <PendingRewardMeter count={state.pendingRewards} />
 
       <h2 className="text-lg font-semibold">오늘의 추천</h2>
@@ -254,6 +259,7 @@ export function TodayRecommendations({ today }: { today: TodayData }) {
         />
       )}
       {dialogs}
+      <RewardArrival arrival={today.arrival} />
     </section>
   );
 }
