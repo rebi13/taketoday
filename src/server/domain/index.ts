@@ -45,3 +45,10 @@ export {
   planCompletionReward,
   type CompletionRecord,
 } from "./completions";
+export {
+  settleDay,
+  type RewardReason,
+  type SettleOptions,
+  type SettlementCompletion,
+  type SettlementPayout,
+} from "./settlement";
