@@ -48,11 +48,31 @@ describe("settleDay", () => {
     expect(payout.completionIds).toEqual([again.id]);
   });
 
-  it("같은 미션을 3번 해도 첫 1건만 인정한다", () => {
+  it("같은 미션을 하루에 3번 해도 그날은 첫 1건만 인정한다", () => {
     const first = done("a", 3);
     const [payout] = settleDay(DAY, [done("a", 5), first, done("a", 9)]);
     expect(payout.completionIds).toEqual([first.id]);
     expect(payout.amount).toBe(10);
+  });
+
+  it("같은 미션을 매일 하면 날마다 1건씩 인정한다", () => {
+    const days = ["2026-11-03", "2026-11-04", "2026-11-05"];
+    const daily = days.map((day, i) =>
+      done("a", 0, {
+        localDate: day,
+        completedAt: new Date(Date.UTC(2026, 10, 3 + i, 0)),
+      }),
+    );
+    for (const [i, day] of days.entries()) {
+      expect(settleDay(day, daily)).toEqual([
+        {
+          userId: ME,
+          reason: "personal_reward",
+          amount: 10,
+          completionIds: [daily[i].id],
+        },
+      ]);
+    }
   });
 
   it("11개를 하면 완료 시각 순으로 앞 10개만 준다", () => {
